@@ -21,7 +21,7 @@ public class Dashboard extends JFrame {
         setLocationRelativeTo(null);
         setResizable(true);
 
-        // Create main panel with responsive layout
+        // Create main panel with responsive layoutthtt
         JPanel mainPanel = new JPanel(new GridBagLayout());
         mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         GridBagConstraints gbc = new GridBagConstraints();
