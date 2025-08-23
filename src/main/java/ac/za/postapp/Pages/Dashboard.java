@@ -17,64 +17,80 @@ public class Dashboard extends JFrame {
     public Dashboard() {
         setTitle("Dashboard - Campus Accessibility");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(400, 300);
+        setSize(500, 400);
         setLocationRelativeTo(null);
-        setResizable(true);
+        setResizable(false);
 
-        // Create main panel with responsive layout
+        // ==== Main Background ====
         JPanel mainPanel = new JPanel(new GridBagLayout());
-        mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
+        mainPanel.setBackground(new Color(245, 247, 250));
+
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.insets = new Insets(12, 12, 12, 12);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0;
 
-        // User information labels
+        Font labelFont = new Font("Segoe UI", Font.BOLD, 14);
+        Font valueFont = new Font("Segoe UI", Font.PLAIN, 14);
+
+        // ==== Title ====
+        JLabel title = new JLabel("📋 Student Dashboard", SwingConstants.CENTER);
+        title.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        title.setForeground(new Color(52, 73, 94));
         gbc.gridx = 0;
         gbc.gridy = 0;
-        mainPanel.add(new JLabel("Name:"), gbc);
-        gbc.gridx = 1;
-        nameLabel = new JLabel("N/A");
-        mainPanel.add(nameLabel, gbc);
+        gbc.gridwidth = 2;
+        mainPanel.add(title, gbc);
+        gbc.gridwidth = 1;
 
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        mainPanel.add(new JLabel("Surname:"), gbc);
-        gbc.gridx = 1;
-        surnameLabel = new JLabel("N/A");
-        mainPanel.add(surnameLabel, gbc);
+        // ==== Info Rows ====
+        int row = 1;
+        gbc.gridx = 0; gbc.gridy = row; mainPanel.add(createStyledLabel("Name:", labelFont), gbc);
+        gbc.gridx = 1; nameLabel = createValueLabel(valueFont); mainPanel.add(nameLabel, gbc);
 
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        mainPanel.add(new JLabel("Student Number:"), gbc);
-        gbc.gridx = 1;
-        studentNumberLabel = new JLabel("N/A");
-        mainPanel.add(studentNumberLabel, gbc);
+        row++;
+        gbc.gridx = 0; gbc.gridy = row; mainPanel.add(createStyledLabel("Surname:", labelFont), gbc);
+        gbc.gridx = 1; surnameLabel = createValueLabel(valueFont); mainPanel.add(surnameLabel, gbc);
 
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        mainPanel.add(new JLabel("Age:"), gbc);
-        gbc.gridx = 1;
-        ageLabel = new JLabel("N/A");
-        mainPanel.add(ageLabel, gbc);
+        row++;
+        gbc.gridx = 0; gbc.gridy = row; mainPanel.add(createStyledLabel("Student Number:", labelFont), gbc);
+        gbc.gridx = 1; studentNumberLabel = createValueLabel(valueFont); mainPanel.add(studentNumberLabel, gbc);
 
-        gbc.gridx = 0;
-        gbc.gridy = 4;
-        mainPanel.add(new JLabel("Gender:"), gbc);
-        gbc.gridx = 1;
-        genderLabel = new JLabel("N/A");
-        mainPanel.add(genderLabel, gbc);
+        row++;
+        gbc.gridx = 0; gbc.gridy = row; mainPanel.add(createStyledLabel("Age:", labelFont), gbc);
+        gbc.gridx = 1; ageLabel = createValueLabel(valueFont); mainPanel.add(ageLabel, gbc);
 
-        gbc.gridx = 0;
-        gbc.gridy = 5;
-        mainPanel.add(new JLabel("Email:"), gbc);
-        gbc.gridx = 1;
-        emailLabel = new JLabel("N/A");
-        mainPanel.add(emailLabel, gbc);
+        row++;
+        gbc.gridx = 0; gbc.gridy = row; mainPanel.add(createStyledLabel("Gender:", labelFont), gbc);
+        gbc.gridx = 1; genderLabel = createValueLabel(valueFont); mainPanel.add(genderLabel, gbc);
 
-        // Logout button
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+        row++;
+        gbc.gridx = 0; gbc.gridy = row; mainPanel.add(createStyledLabel("Email:", labelFont), gbc);
+        gbc.gridx = 1; emailLabel = createValueLabel(valueFont); mainPanel.add(emailLabel, gbc);
+
+        // ==== Logout Button ====
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setBackground(new Color(245, 247, 250));
+
         logoutButton = new JButton("Logout");
+        logoutButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        logoutButton.setBackground(new Color(220, 53, 69));
+        logoutButton.setForeground(Color.WHITE);
+        logoutButton.setFocusPainted(false);
+        logoutButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        logoutButton.setPreferredSize(new Dimension(120, 40));
+        logoutButton.setBorder(BorderFactory.createEmptyBorder(8, 20, 8, 20));
+
+        // Hover effect
+        logoutButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                logoutButton.setBackground(new Color(200, 35, 51));
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                logoutButton.setBackground(new Color(220, 53, 69));
+            }
+        });
 
         logoutButton.addActionListener(new ActionListener() {
             @Override
@@ -85,9 +101,23 @@ public class Dashboard extends JFrame {
 
         buttonPanel.add(logoutButton);
 
-        // Add components to main panel
+        // ==== Layout ====
         add(mainPanel, BorderLayout.CENTER);
         add(buttonPanel, BorderLayout.SOUTH);
+    }
+
+    private JLabel createStyledLabel(String text, Font font) {
+        JLabel label = new JLabel(text);
+        label.setFont(font);
+        label.setForeground(new Color(52, 73, 94));
+        return label;
+    }
+
+    private JLabel createValueLabel(Font font) {
+        JLabel label = new JLabel("N/A");
+        label.setFont(font);
+        label.setForeground(new Color(33, 37, 41));
+        return label;
     }
 
     public void setUserData(User user) {

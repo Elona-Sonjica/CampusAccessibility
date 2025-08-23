@@ -14,47 +14,78 @@ public class Login extends JFrame {
     public Login() {
         setTitle("Login - Campus Accessibility");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(400, 300);
+        setSize(450, 350);
         setLocationRelativeTo(null);
-        setResizable(true);
+        setResizable(false);
 
-        // Create main panel with responsive layout
+        // ==== Main Background ====
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
-        mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(25, 25, 25, 25));
+        mainPanel.setBackground(new Color(245, 247, 250));
 
-        // Create form panel
+        // ==== Title ====
+        JLabel title = new JLabel("🔑 Campus Login", SwingConstants.CENTER);
+        title.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        title.setForeground(new Color(52, 73, 94));
+        mainPanel.add(title, BorderLayout.NORTH);
+
+        // ==== Form Panel ====
         JPanel formPanel = new JPanel(new GridBagLayout());
-        formPanel.setBorder(BorderFactory.createTitledBorder("Login"));
+        formPanel.setBackground(Color.WHITE);
+        formPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(220, 220, 220)),
+                BorderFactory.createEmptyBorder(20, 20, 20, 20)
+        ));
+
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.insets = new Insets(10, 10, 10, 10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0;
 
-        // Email label and field
-        gbc.gridx = 0;
-        gbc.gridy = 0;
+        Font labelFont = new Font("Segoe UI", Font.BOLD, 14);
+
+        // ==== Email ====
+        gbc.gridx = 0; gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.WEST;
-        formPanel.add(new JLabel("Email:"), gbc);
+        JLabel emailLabel = new JLabel("Email:");
+        emailLabel.setFont(labelFont);
+        emailLabel.setForeground(new Color(52, 73, 94));
+        formPanel.add(emailLabel, gbc);
 
         gbc.gridx = 1;
-        gbc.gridy = 0;
         emailField = new JTextField(20);
+        emailField.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        emailField.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(180, 180, 180)),
+                BorderFactory.createEmptyBorder(5, 8, 5, 8)
+        ));
         formPanel.add(emailField, gbc);
 
-        // Password label and field
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        formPanel.add(new JLabel("Password:"), gbc);
+        // ==== Password ====
+        gbc.gridx = 0; gbc.gridy = 1;
+        JLabel passwordLabel = new JLabel("Password:");
+        passwordLabel.setFont(labelFont);
+        passwordLabel.setForeground(new Color(52, 73, 94));
+        formPanel.add(passwordLabel, gbc);
 
         gbc.gridx = 1;
-        gbc.gridy = 1;
         passwordField = new JPasswordField(20);
+        passwordField.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        passwordField.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(180, 180, 180)),
+                BorderFactory.createEmptyBorder(5, 8, 5, 8)
+        ));
         formPanel.add(passwordField, gbc);
 
-        // Button panel
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+        // ==== Buttons ====
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 15));
+        buttonPanel.setBackground(new Color(245, 247, 250));
+
         loginButton = new JButton("Login");
+        styleButton(loginButton, new Color(40, 167, 69));
+
         registerButton = new JButton("Register");
+        styleButton(registerButton, new Color(0, 123, 255));
 
         loginButton.addActionListener(new ActionListener() {
             @Override
@@ -73,11 +104,32 @@ public class Login extends JFrame {
         buttonPanel.add(loginButton);
         buttonPanel.add(registerButton);
 
-        // Add components to main panel
+        // ==== Layout ====
         mainPanel.add(formPanel, BorderLayout.CENTER);
         mainPanel.add(buttonPanel, BorderLayout.SOUTH);
 
         add(mainPanel);
+    }
+
+    // Helper method to style buttons
+    private void styleButton(JButton button, Color baseColor) {
+        button.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        button.setBackground(baseColor);
+        button.setForeground(Color.WHITE);
+        button.setFocusPainted(false);
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        button.setPreferredSize(new Dimension(120, 40));
+        button.setBorder(BorderFactory.createEmptyBorder(8, 20, 8, 20));
+
+        // Hover effect
+        button.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                button.setBackground(baseColor.darker());
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                button.setBackground(baseColor);
+            }
+        });
     }
 
     private void login() {
@@ -89,7 +141,7 @@ public class Login extends JFrame {
             return;
         }
 
-        // Simple validation - in a real application, you'd check against a database
+        // Simple validation
         if (email.contains("@") && password.length() >= 6) {
             JOptionPane.showMessageDialog(this, "Login successful!", "Success", JOptionPane.INFORMATION_MESSAGE);
             openDashboard();
@@ -111,12 +163,9 @@ public class Login extends JFrame {
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                Login login = new Login();
-                login.setVisible(true);
-            }
+        SwingUtilities.invokeLater(() -> {
+            Login login = new Login();
+            login.setVisible(true);
         });
     }
 }
