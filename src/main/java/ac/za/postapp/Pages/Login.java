@@ -4,17 +4,23 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import org.mindrot.jbcrypt.BCrypt;
 
 public class Login extends JFrame {
     private JTextField emailField;
     private JPasswordField passwordField;
     private JButton loginButton;
     private JButton registerButton;
+    private JCheckBox showPasswordCheckBox;
 
     public Login() {
         setTitle("Login - Campus Accessibility");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(450, 350);
+        setSize(450, 400);
         setLocationRelativeTo(null);
         setResizable(false);
 
@@ -75,7 +81,26 @@ public class Login extends JFrame {
                 BorderFactory.createLineBorder(new Color(180, 180, 180)),
                 BorderFactory.createEmptyBorder(5, 8, 5, 8)
         ));
+        passwordField.setEchoChar('•'); // Set password character
         formPanel.add(passwordField, gbc);
+
+        // ==== Show Password Checkbox ====
+        gbc.gridx = 1; gbc.gridy = 2;
+        showPasswordCheckBox = new JCheckBox("Show Password");
+        showPasswordCheckBox.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        showPasswordCheckBox.setBackground(Color.WHITE);
+        showPasswordCheckBox.setFocusPainted(false);
+        showPasswordCheckBox.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (showPasswordCheckBox.isSelected()) {
+                    passwordField.setEchoChar((char) 0); // Show password
+                } else {
+                    passwordField.setEchoChar('•'); // Hide password
+                }
+            }
+        });
+        formPanel.add(showPasswordCheckBox, gbc);
 
         // ==== Buttons ====
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 15));
@@ -100,6 +125,9 @@ public class Login extends JFrame {
                 openRegister();
             }
         });
+
+        // Add Enter key listener to login button
+        getRootPane().setDefaultButton(loginButton);
 
         buttonPanel.add(loginButton);
         buttonPanel.add(registerButton);
@@ -141,18 +169,65 @@ public class Login extends JFrame {
             return;
         }
 
-        // Simple validation
-        if (email.contains("@") && password.length() >= 6) {
-            JOptionPane.showMessageDialog(this, "Login successful!", "Success", JOptionPane.INFORMATION_MESSAGE);
-            openDashboard();
-        } else {
-            JOptionPane.showMessageDialog(this, "Invalid email or password", "Error", JOptionPane.ERROR_MESSAGE);
+        // Validate email format
+        if (!isValidEmail(email)) {
+            JOptionPane.showMessageDialog(this, "Please enter a valid email address", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Database authentication
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            String sql = "SELECT * FROM users WHERE email = ?";
+            PreparedStatement pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, email);
+
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                // Check password using BCrypt
+                String hashedPassword = rs.getString("password_hash");
+                if (BCrypt.checkpw(password, hashedPassword)) {
+                    // Login successful
+                    User user = new User(
+                            rs.getString("name"),
+                            rs.getString("surname"),
+                            rs.getString("student_number"),
+                            rs.getInt("age"),
+                            rs.getString("gender"),
+                            rs.getString("email")
+                    );
+
+                    // Create session token
+                    String sessionToken = SessionManager.createSession(rs.getInt("id"));
+
+                    if (sessionToken != null) {
+                        JOptionPane.showMessageDialog(this, "Login successful!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                        openDashboard(user);
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Session creation failed", "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(this, "Invalid email or password", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "Invalid email or password", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Database error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            ex.printStackTrace();
         }
     }
 
-    private void openDashboard() {
+    // Email validation method
+    private boolean isValidEmail(String email) {
+        String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
+        return email.matches(emailRegex);
+    }
+
+    private void openDashboard(User user) {
         this.dispose();
         Dashboard dashboard = new Dashboard();
+        dashboard.setUserData(user);
         dashboard.setVisible(true);
     }
 
@@ -163,6 +238,16 @@ public class Login extends JFrame {
     }
 
     public static void main(String[] args) {
+        // Initialize database connection
+        DatabaseConnection.initializeDatabase();
+
+        // Set look and feel to system default
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception e) {
+            System.err.println("Error setting look and feel: " + e.getMessage());
+        }
+
         SwingUtilities.invokeLater(() -> {
             Login login = new Login();
             login.setVisible(true);

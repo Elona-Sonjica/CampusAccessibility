@@ -26,7 +26,12 @@ public class Dashboard extends JFrame {
         // ===== Scrollable Main Panel =====
         JPanel contentPanel = new JPanel(new GridBagLayout());
         contentPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        contentPanel.setBackground(new Color(245, 247, 250));
+        contentPanel.setBackground(new
+
+
+
+
+                Color(245, 247, 250));
 
         JScrollPane scrollPane = new JScrollPane(contentPanel);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
