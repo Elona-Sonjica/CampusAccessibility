@@ -1,13 +1,12 @@
 package ac.za.postapp.Pages;
 
 import javax.swing.*;
+import javax.swing.Timer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.geom.AffineTransform;
 import java.util.*;
 import java.util.List;
-import java.util.Timer;
 
 public class MapPanel extends JPanel {
     private HashMap<String, Point> locationCoordinates = new HashMap<>();
@@ -91,8 +90,8 @@ public class MapPanel extends JPanel {
             // Clear current cell and surrounding cells
             for (int i = -1; i <= 1; i++) {
                 for (int j = -1; j <= 1; j++) {
-                    if (x1+i >= 0 && x1+i < MAP_WIDTH && y1+j >= 0 && y1+j < MAP_HEIGHT) {
-                        mapGrid[y1+j][x1+i] = 0;
+                    if (x1 + i >= 0 && x1 + i < MAP_WIDTH && y1 + j >= 0 && y1 + j < MAP_HEIGHT) {
+                        mapGrid[y1 + j][x1 + i] = 0;
                     }
                 }
             }
@@ -113,22 +112,22 @@ public class MapPanel extends JPanel {
 
     private void initializeLocations() {
         // Map grid coordinates to pixel coordinates
-        locationCoordinates.put("Engineering Building", gridToPixel(2, 2));
-        locationCoordinates.put("Health Sciences Building", gridToPixel(7, 2));
-        locationCoordinates.put("Business Building", gridToPixel(12, 2));
-        locationCoordinates.put("Library", gridToPixel(4, 7));
-        locationCoordinates.put("Food Court", gridToPixel(9, 7));
-        locationCoordinates.put("Computer Lab", gridToPixel(14, 7));
-        locationCoordinates.put("Toilets", gridToPixel(14, 14));
-        locationCoordinates.put("Exit", gridToPixel(19, 16));
+        locationCoordinates.put("Lb 1.3", gridToPixel(2, 2));
+        locationCoordinates.put("TOILET", gridToPixel(7, 2));
+        locationCoordinates.put("LaB 1.15", gridToPixel(12, 2));
+        locationCoordinates.put("LaB 1.22", gridToPixel(4, 7));
+        locationCoordinates.put("LaB 1.19", gridToPixel(9, 7));
+        locationCoordinates.put("LaB 1.24", gridToPixel(14, 7));
+        locationCoordinates.put("LaB 1.29", gridToPixel(14, 14));
+        locationCoordinates.put("LaB 1.35", gridToPixel(19, 16));
 
         // Set initial location
-        currentLocation = locationCoordinates.get("Engineering Building");
+        currentLocation = locationCoordinates.get("Entry");
     }
 
     private Point gridToPixel(int gridX, int gridY) {
-        int pixelX = gridX * GRID_SIZE + GRID_SIZE/2;
-        int pixelY = gridY * GRID_SIZE + GRID_SIZE/2;
+        int pixelX = gridX * GRID_SIZE + GRID_SIZE / 2;
+        int pixelY = gridY * GRID_SIZE + GRID_SIZE / 2;
         return new Point(pixelX, pixelY);
     }
 
@@ -164,20 +163,8 @@ public class MapPanel extends JPanel {
         stopButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
         stopButton.setEnabled(false);
 
-        navigateButton.addActionListener(e -> {
-            try {
-                startNavigation();
-            } catch (InterruptedException ex) {
-                throw new RuntimeException(ex);
-            }
-        });
-        stopButton.addActionListener(e -> {
-            try {
-                stopNavigation();
-            } catch (InterruptedException ex) {
-                throw new RuntimeException(ex);
-            }
-        });
+        navigateButton.addActionListener(e -> startNavigation());
+        stopButton.addActionListener(e -> stopNavigation());
 
         panel.add(new JLabel("From:"));
         panel.add(startComboBox);
@@ -189,7 +176,7 @@ public class MapPanel extends JPanel {
         return panel;
     }
 
-    private void startNavigation() throws InterruptedException {
+    private void startNavigation() {
         String startName = (String) startComboBox.getSelectedItem();
         String endName = (String) endComboBox.getSelectedItem();
 
@@ -223,19 +210,32 @@ public class MapPanel extends JPanel {
 
             generateDirections(start, end);
 
-            if (animationTimer != null) {
-                animationTimer.wait();
+            if (animationTimer != null && animationTimer.isRunning()) {
+                animationTimer.stop();
             }
 
-            // FIXED: Using javax.swing.Timer with ActionListener
-            animationTimer = new Timer();
-            animationTimer.wait();
+            // Fixed Timer implementation
+            animationTimer = new Timer(150, new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    if (currentStep < currentPath.size()) {
+                        currentLocation = currentPath.get(currentStep);
+                        updateDirections();
+                        repaint();
+                        currentStep++;
+                    } else {
+                        stopNavigation();
+                        directionsArea.append("\n\n✅ You have reached your destination!");
+                    }
+                }
+            });
+            animationTimer.start();
         }
     }
 
-    private void stopNavigation() throws InterruptedException {
-        if (animationTimer != null) {
-            animationTimer.wait();
+    private void stopNavigation() {
+        if (animationTimer != null && animationTimer.isRunning()) {
+            animationTimer.stop();
         }
         isAnimating = false;
         navigateButton.setEnabled(true);
@@ -248,17 +248,19 @@ public class MapPanel extends JPanel {
         // Priority queue for open nodes
         PriorityQueue<Node> openSet = new PriorityQueue<>();
         // Maps to track costs and paths
-        Map<Point, Double> gScore = new HashMap<>(); // Cost from start to node
-        Map<Point, Double> fScore = new HashMap<>(); // Estimated total cost (g + h)
-        Map<Point, Point> cameFrom = new HashMap<>(); // Navigation path
+        Map<String, Double> gScore = new HashMap<>(); // Cost from start to node
+        Map<String, Double> fScore = new HashMap<>(); // Estimated total cost (g + h)
+        Map<String, Point> cameFrom = new HashMap<>(); // Navigation path
 
         // Initialize start node
-        gScore.put(start, 0.0);
-        fScore.put(start, heuristic(start, end));
-        openSet.add(new Node(start, fScore.get(start)));
+        String startKey = start.x + "," + start.y;
+        gScore.put(startKey, 0.0);
+        fScore.put(startKey, heuristic(start, end));
+        openSet.add(new Node(start, fScore.get(startKey)));
 
         while (!openSet.isEmpty()) {
             Node current = openSet.poll();
+            String currentKey = current.point.x + "," + current.point.y;
 
             // If we reached the destination
             if (current.point.equals(end)) {
@@ -267,19 +269,27 @@ public class MapPanel extends JPanel {
 
             // Check all neighbors
             for (Point neighbor : getNeighbors(current.point)) {
+                String neighborKey = neighbor.x + "," + neighbor.y;
+
                 // Calculate tentative gScore
-                double tentativeGScore = gScore.get(current.point) +
-                        distance(current.point, neighbor);
+                double tentativeGScore = gScore.get(currentKey) + distance(current.point, neighbor);
 
                 // If this path to neighbor is better
-                if (!gScore.containsKey(neighbor) || tentativeGScore < gScore.get(neighbor)) {
-                    cameFrom.put(neighbor, current.point);
-                    gScore.put(neighbor, tentativeGScore);
-                    fScore.put(neighbor, tentativeGScore + heuristic(neighbor, end));
+                if (!gScore.containsKey(neighborKey) || tentativeGScore < gScore.get(neighborKey)) {
+                    cameFrom.put(neighborKey, current.point);
+                    gScore.put(neighborKey, tentativeGScore);
+                    fScore.put(neighborKey, tentativeGScore + heuristic(neighbor, end));
 
                     // Add to open set if not already there
-                    if (!openSet.contains(new Node(neighbor, 0))) {
-                        openSet.add(new Node(neighbor, fScore.get(neighbor)));
+                    boolean inOpenSet = false;
+                    for (Node node : openSet) {
+                        if (node.point.equals(neighbor)) {
+                            inOpenSet = true;
+                            break;
+                        }
+                    }
+                    if (!inOpenSet) {
+                        openSet.add(new Node(neighbor, fScore.get(neighborKey)));
                     }
                 }
             }
@@ -302,7 +312,7 @@ public class MapPanel extends JPanel {
 
     private List<Point> getNeighbors(Point point) {
         List<Point> neighbors = new ArrayList<>();
-        int[][] directions = {{0,1}, {1,0}, {0,-1}, {-1,0}, {1,1}, {1,-1}, {-1,1}, {-1,-1}};
+        int[][] directions = {{0,1}, {1,0}, {0,-1}, {-1,0}}; // Only cardinal directions for simplicity
 
         for (int[] dir : directions) {
             int newX = point.x + dir[0];
@@ -318,12 +328,14 @@ public class MapPanel extends JPanel {
         return neighbors;
     }
 
-    private List<Point> reconstructPath(Map<Point, Point> cameFrom, Point current) {
+    private List<Point> reconstructPath(Map<String, Point> cameFrom, Point current) {
         List<Point> path = new ArrayList<>();
         path.add(current);
 
-        while (cameFrom.containsKey(current)) {
-            current = cameFrom.get(current);
+        String currentKey = current.x + "," + current.y;
+        while (cameFrom.containsKey(currentKey)) {
+            current = cameFrom.get(currentKey);
+            currentKey = current.x + "," + current.y;
             path.add(0, current);
         }
 
@@ -352,11 +364,6 @@ public class MapPanel extends JPanel {
             Node other = (Node) obj;
             return point.equals(other.point);
         }
-
-        @Override
-        public int hashCode() {
-            return point.hashCode();
-        }
     }
 
     private void generateDirections(Point start, Point end) {
@@ -366,14 +373,14 @@ public class MapPanel extends JPanel {
         directionsArea.append("🎯 Destination: " + getLocationName(end) + "\n");
 
         double distance = Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2));
-        directionsArea.append(String.format("📏 Total distance: %.1f meters\n", distance/2));
+        directionsArea.append(String.format("📏 Total distance: %.1f meters\n", distance / 2));
         directionsArea.append("➡️  Follow the blue path on the map\n");
     }
 
     private void updateDirections() {
         if (currentStep > 0 && currentStep < currentPath.size()) {
             Point current = currentPath.get(currentStep);
-            Point previous = currentPath.get(currentStep-1);
+            Point previous = currentPath.get(currentStep - 1);
 
             double dx = current.x - previous.x;
             double dy = current.y - previous.y;
@@ -385,25 +392,32 @@ public class MapPanel extends JPanel {
                 direction = dy > 0 ? "South" : "North";
             }
 
-            Point destination = currentPath.get(currentPath.size()-1);
+            Point destination = currentPath.get(currentPath.size() - 1);
             double distance = Math.sqrt(Math.pow(destination.x - current.x, 2) +
                     Math.pow(destination.y - current.y, 2));
 
-            int timeEstimate = (int)(distance / 20); // Rough time estimate
+            int timeEstimate = (int) (distance / 20); // Rough time estimate
 
             directionsArea.setText("🧭 Current direction: " + direction + "\n");
-            directionsArea.append(String.format("📏 Distance to destination: %.1f meters\n", distance/2));
+            directionsArea.append(String.format("📏 Distance to destination: %.1f meters\n", distance / 2));
             directionsArea.append(String.format("⏱️  Estimated time: %d seconds", timeEstimate));
         }
     }
 
     private String getLocationName(Point point) {
-        for (String entry : locationCoordinates.keySet()) {
-            if (entry.getClass().equals(point)) {
-                return entry;
+        for (Map.Entry<String, Point> entry : locationCoordinates.entrySet()) {
+            if (entry.getValue().equals(point)) {
+                return entry.getKey();
             }
         }
         return "Unknown Location";
+    }
+
+    // Method to set destination from Dashboard
+    public void setDestination(String destination) {
+        if (endComboBox != null) {
+            endComboBox.setSelectedItem(destination);
+        }
     }
 
     @Override
@@ -413,7 +427,6 @@ public class MapPanel extends JPanel {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         // Draw grid background
-        g2.setColor(new Color(240, 240, 240));
         for (int y = 0; y < MAP_HEIGHT; y++) {
             for (int x = 0; x < MAP_WIDTH; x++) {
                 if (mapGrid[y][x] == 1) {
@@ -431,17 +444,9 @@ public class MapPanel extends JPanel {
             g2.setStroke(new BasicStroke(4, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 
             for (int i = 1; i < currentPath.size(); i++) {
-                Point p1 = currentPath.get(i-1);
+                Point p1 = currentPath.get(i - 1);
                 Point p2 = currentPath.get(i);
                 g2.drawLine(p1.x, p1.y, p2.x, p2.y);
-            }
-
-            // Draw direction arrows
-            g2.setColor(new Color(0, 100, 200));
-            for (int i = 5; i < currentPath.size(); i += 5) {
-                Point p1 = currentPath.get(i-1);
-                Point p2 = currentPath.get(i);
-                drawArrow(g2, p1.x, p1.y, p2.x, p2.y);
             }
         }
 
@@ -452,11 +457,7 @@ public class MapPanel extends JPanel {
             Point point = entry.getValue();
 
             // Draw location circle
-            GradientPaint gradient = new GradientPaint(
-                    point.x - 20, point.y - 20, new Color(70, 130, 180),
-                    point.x + 20, point.y + 20, new Color(30, 144, 255)
-            );
-            g2.setPaint(gradient);
+            g2.setColor(new Color(70, 130, 180));
             g2.fillOval(point.x - 15, point.y - 15, 30, 30);
 
             g2.setColor(Color.BLACK);
@@ -478,7 +479,7 @@ public class MapPanel extends JPanel {
             // Outer circle
             g2.setColor(new Color(255, 0, 0, 100));
             g2.fillOval(currentLocation.x - 15 - pulse, currentLocation.y - 15 - pulse,
-                    30 + 2*pulse, 30 + 2*pulse);
+                    30 + 2 * pulse, 30 + 2 * pulse);
 
             // Inner circle
             g2.setColor(Color.RED);
@@ -496,22 +497,5 @@ public class MapPanel extends JPanel {
         g2.drawString("➡️ Navigation Path", 120, MAP_HEIGHT * GRID_SIZE + 20);
         g2.setColor(new Color(200, 200, 200));
         g2.drawString("⬜ Obstacles", 250, MAP_HEIGHT * GRID_SIZE + 20);
-    }
-
-    private void drawArrow(Graphics2D g2, int x1, int y1, int x2, int y2) {
-        double angle = Math.atan2(y2 - y1, x2 - x1);
-        int arrowSize = 10;
-
-        Polygon arrowHead = new Polygon();
-        arrowHead.addPoint(0, 0);
-        arrowHead.addPoint(-arrowSize, -arrowSize/2);
-        arrowHead.addPoint(-arrowSize, arrowSize/2);
-
-        AffineTransform transform = new AffineTransform();
-        transform.translate(x2, y2);
-        transform.rotate(angle - Math.PI/2);
-
-        Shape transformedArrow = transform.createTransformedShape(arrowHead);
-        g2.fill(transformedArrow);
     }
 }

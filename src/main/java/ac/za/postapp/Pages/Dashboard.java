@@ -16,26 +16,58 @@ public class Dashboard extends JFrame {
     private JTextField courseField;
     private JTextField destinationField;
 
+    // Map button
+    private JButton mapButton;
+
     public Dashboard() {
         setTitle("Dashboard - CPUT Campus D6");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(600, 500);
+        setSize(800, 700);
         setLocationRelativeTo(null);
-        setResizable(false);
+        setResizable(true);
 
-        // ===== Scrollable Main Panel =====
-        JPanel contentPanel = new JPanel(new GridBagLayout());
-        contentPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        contentPanel.setBackground(new
+        // ===== Main Layout =====
+        setLayout(new BorderLayout());
 
+        // ===== Top Menu Panel =====
+        JPanel topMenuPanel = createTopMenuPanel();
+        add(topMenuPanel, BorderLayout.NORTH);
 
-
-
-                Color(245, 247, 250));
-
+        // ===== Scrollable Main Content Panel =====
+        JPanel contentPanel = createContentPanel();
         JScrollPane scrollPane = new JScrollPane(contentPanel);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        add(scrollPane, BorderLayout.CENTER);
+
+        // ===== Bottom Panel with Logout =====
+        JPanel bottomPanel = createBottomPanel();
+        add(bottomPanel, BorderLayout.SOUTH);
+    }
+
+    private JPanel createTopMenuPanel() {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 10));
+        panel.setBackground(new Color(52, 73, 94));
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
+
+        String[] topOptions = {"Schedule", "Notifications", "Settings", "Profile"};
+        for (String option : topOptions) {
+            JButton btn = createMenuButton(option);
+            panel.add(btn);
+        }
+
+        // Map button - ADDED TO TOP MENU
+        mapButton = createMenuButton("Campus Map");
+        mapButton.addActionListener(e -> openInteractiveMap());
+        panel.add(mapButton);
+
+        return panel;
+    }
+
+    private JPanel createContentPanel() {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        panel.setBackground(new Color(245, 247, 250));
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(10, 10, 10, 10);
@@ -47,124 +79,233 @@ public class Dashboard extends JFrame {
 
         // ==== Title ====
         JLabel title = new JLabel("📋 Student Dashboard", SwingConstants.CENTER);
-        title.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        title.setFont(new Font("Segoe UI", Font.BOLD, 24));
         title.setForeground(new Color(52, 73, 94));
         gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2;
-        contentPanel.add(title, gbc);
+        panel.add(title, gbc);
         gbc.gridwidth = 1;
 
-        int row = 1;
-        // ==== User Info Labels ====
-        gbc.gridx = 0; gbc.gridy = row; contentPanel.add(createStyledLabel("Name:", labelFont), gbc);
-        gbc.gridx = 1; nameLabel = createValueLabel(valueFont); contentPanel.add(nameLabel, gbc);
+        // ==== User Info Section ====
+        JPanel userInfoPanel = createUserInfoPanel(labelFont, valueFont);
+        gbc.gridx = 0; gbc.gridy = 1; gbc.gridwidth = 2;
+        panel.add(userInfoPanel, gbc);
+        gbc.gridwidth = 1;
+
+        // ==== Navigation Section ====
+        JPanel navigationPanel = createNavigationPanel(labelFont);
+        gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 2;
+        panel.add(navigationPanel, gbc);
+
+        return panel;
+    }
+
+    private JPanel createUserInfoPanel(Font labelFont, Font valueFont) {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBorder(BorderFactory.createTitledBorder("Personal Information"));
+        panel.setBackground(Color.WHITE);
+        panel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createTitledBorder("Personal Information"),
+                BorderFactory.createEmptyBorder(10, 10, 10, 10)
+        ));
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 10, 5, 10);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
+
+        int row = 0;
+
+        // Name
+        gbc.gridx = 0; gbc.gridy = row;
+        panel.add(createStyledLabel("Name:", labelFont), gbc);
+        gbc.gridx = 1;
+        nameLabel = createValueLabel(valueFont);
+        panel.add(nameLabel, gbc);
 
         row++;
-        gbc.gridx = 0; gbc.gridy = row; contentPanel.add(createStyledLabel("Surname:", labelFont), gbc);
-        gbc.gridx = 1; surnameLabel = createValueLabel(valueFont); contentPanel.add(surnameLabel, gbc);
+        gbc.gridx = 0; gbc.gridy = row;
+        panel.add(createStyledLabel("Surname:", labelFont), gbc);
+        gbc.gridx = 1;
+        surnameLabel = createValueLabel(valueFont);
+        panel.add(surnameLabel, gbc);
 
         row++;
-        gbc.gridx = 0; gbc.gridy = row; contentPanel.add(createStyledLabel("Student Number:", labelFont), gbc);
-        gbc.gridx = 1; studentNumberLabel = createValueLabel(valueFont); contentPanel.add(studentNumberLabel, gbc);
+        gbc.gridx = 0; gbc.gridy = row;
+        panel.add(createStyledLabel("Student Number:", labelFont), gbc);
+        gbc.gridx = 1;
+        studentNumberLabel = createValueLabel(valueFont);
+        panel.add(studentNumberLabel, gbc);
 
         row++;
-        gbc.gridx = 0; gbc.gridy = row; contentPanel.add(createStyledLabel("Age:", labelFont), gbc);
-        gbc.gridx = 1; ageLabel = createValueLabel(valueFont); contentPanel.add(ageLabel, gbc);
+        gbc.gridx = 0; gbc.gridy = row;
+        panel.add(createStyledLabel("Age:", labelFont), gbc);
+        gbc.gridx = 1;
+        ageLabel = createValueLabel(valueFont);
+        panel.add(ageLabel, gbc);
 
         row++;
-        gbc.gridx = 0; gbc.gridy = row; contentPanel.add(createStyledLabel("Gender:", labelFont), gbc);
-        gbc.gridx = 1; genderLabel = createValueLabel(valueFont); contentPanel.add(genderLabel, gbc);
+        gbc.gridx = 0; gbc.gridy = row;
+        panel.add(createStyledLabel("Gender:", labelFont), gbc);
+        gbc.gridx = 1;
+        genderLabel = createValueLabel(valueFont);
+        panel.add(genderLabel, gbc);
 
         row++;
-        gbc.gridx = 0; gbc.gridy = row; contentPanel.add(createStyledLabel("Email:", labelFont), gbc);
-        gbc.gridx = 1; emailLabel = createValueLabel(valueFont); contentPanel.add(emailLabel, gbc);
+        gbc.gridx = 0; gbc.gridy = row;
+        panel.add(createStyledLabel("Email:", labelFont), gbc);
+        gbc.gridx = 1;
+        emailLabel = createValueLabel(valueFont);
+        panel.add(emailLabel, gbc);
 
-        // ==== Faculty Dropdown ====
-        row++;
-        gbc.gridx = 0; gbc.gridy = row; contentPanel.add(createStyledLabel("Faculty:", labelFont), gbc);
+        return panel;
+    }
+
+    private JPanel createNavigationPanel(Font labelFont) {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createTitledBorder("Campus Navigation"),
+                BorderFactory.createEmptyBorder(10, 10, 10, 10)
+        ));
+        panel.setBackground(Color.WHITE);
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
+
+        int row = 0;
+
+        // Faculty Dropdown
+        gbc.gridx = 0; gbc.gridy = row;
+        panel.add(createStyledLabel("Faculty:", labelFont), gbc);
         gbc.gridx = 1;
         String[] faculties = {"Engineering", "Health Sciences", "Business", "Education", "Applied Sciences"};
         facultyComboBox = new JComboBox<>(faculties);
-        contentPanel.add(facultyComboBox, gbc);
+        facultyComboBox.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        panel.add(facultyComboBox, gbc);
 
-        // ==== Course Field ====
         row++;
-        gbc.gridx = 0; gbc.gridy = row; contentPanel.add(createStyledLabel("Course:", labelFont), gbc);
+        gbc.gridx = 0; gbc.gridy = row;
+        panel.add(createStyledLabel("Course:", labelFont), gbc);
         gbc.gridx = 1;
         courseField = new JTextField();
-        courseField.setText("Enter your course");
-        contentPanel.add(courseField, gbc);
+        courseField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        courseField.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(180, 180, 180)),
+                BorderFactory.createEmptyBorder(5, 8, 5, 8)
+        ));
+        panel.add(courseField, gbc);
 
-        // ==== Destination Field ====
         row++;
-        gbc.gridx = 0; gbc.gridy = row; contentPanel.add(createStyledLabel("Destination:", labelFont), gbc);
+        gbc.gridx = 0; gbc.gridy = row;
+        panel.add(createStyledLabel("Destination:", labelFont), gbc);
         gbc.gridx = 1;
         destinationField = new JTextField();
-        destinationField.setText("Enter your destination");
-        contentPanel.add(destinationField, gbc);
+        destinationField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        destinationField.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(180, 180, 180)),
+                BorderFactory.createEmptyBorder(5, 8, 5, 8)
+        ));
+        panel.add(destinationField, gbc);
 
-        // ==== Top Menu Buttons (excluding Map and Home) ====
-        JPanel topMenuPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
-        topMenuPanel.setBackground(new Color(245, 247, 250));
-        String[] topOptions = {"Schedule", "Notifications", "Settings"};
-        for (String option : topOptions) {
-            JButton btn = createMenuButton(option);
-            topMenuPanel.add(btn);
-        }
+        // Quick Navigation Buttons
+        row++;
+        gbc.gridx = 0; gbc.gridy = row; gbc.gridwidth = 2;
+        JPanel quickNavPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
+        quickNavPanel.setBackground(Color.WHITE);
 
-        // ==== Bottom Menu Buttons (Map and Home) ====
-        JPanel bottomMenuPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
-        bottomMenuPanel.setBackground(new Color(245, 247, 250));
-        String[] bottomOptions = {"Home", "Map"};
-        for (String option : bottomOptions) {
-            JButton btn = new JButton(option);
-            btn.setFocusPainted(false);
-            btn.setBackground(new Color(52, 73, 94));
+        String[] quickLocations = {"Library", "Food Court", "Computer Lab", "Toilets"};
+        for (String location : quickLocations) {
+            JButton btn = new JButton(location);
+            btn.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+            btn.setBackground(new Color(70, 130, 180));
             btn.setForeground(Color.WHITE);
+            btn.setFocusPainted(false);
             btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
-            if (option.equals("Map")) {
-                btn.addActionListener(e -> {
-                    // Open CampusMap window
-                    CampusMap mapWindow = new CampusMap();
-                    mapWindow.setVisible(true);
-                });
-            } else {
-                btn.addActionListener(e -> JOptionPane.showMessageDialog(this, option + " clicked!"));
-            }
-
-            bottomMenuPanel.add(btn);
+            btn.addActionListener(e -> {
+                destinationField.setText(location);
+                openInteractiveMapWithDestination(location);
+            });
+            quickNavPanel.add(btn);
         }
+        panel.add(quickNavPanel, gbc);
 
-        // ==== Logout Button ====
-        JPanel logoutPanel = new JPanel();
-        logoutPanel.setBackground(new Color(245, 247, 250));
+        return panel;
+    }
+
+    private JPanel createBottomPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(new Color(245, 247, 250));
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 20, 20, 20));
+
+        // Home button
+        JButton homeButton = new JButton("Home");
+        homeButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        homeButton.setBackground(new Color(52, 73, 94));
+        homeButton.setForeground(Color.WHITE);
+        homeButton.setFocusPainted(false);
+        homeButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        homeButton.addActionListener(e -> JOptionPane.showMessageDialog(this, "Already on home page!"));
+
+        // Logout button
         logoutButton = new JButton("Logout");
         logoutButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
         logoutButton.setBackground(new Color(220, 53, 69));
         logoutButton.setForeground(Color.WHITE);
         logoutButton.setFocusPainted(false);
         logoutButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        logoutButton.setPreferredSize(new Dimension(120, 40));
         logoutButton.addActionListener(e -> logout());
-        logoutPanel.add(logoutButton);
 
-        // ==== Add Panels to Frame ====
-        add(topMenuPanel, BorderLayout.NORTH);
-        add(scrollPane, BorderLayout.CENTER);
-        JPanel bottomPanel = new JPanel(new BorderLayout());
-        bottomPanel.add(bottomMenuPanel, BorderLayout.NORTH);
-        bottomPanel.add(logoutPanel, BorderLayout.SOUTH);
-        add(bottomPanel, BorderLayout.SOUTH);
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 0));
+        buttonPanel.setBackground(new Color(245, 247, 250));
+        buttonPanel.add(homeButton);
+        buttonPanel.add(logoutButton);
+
+        panel.add(buttonPanel, BorderLayout.EAST);
+
+        return panel;
     }
 
     private JButton createMenuButton(String text) {
         JButton btn = new JButton(text);
-        btn.setFocusPainted(false);
-        btn.setBackground(new Color(52, 73, 94));
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        btn.setBackground(new Color(70, 130, 180));
         btn.setForeground(Color.WHITE);
+        btn.setFocusPainted(false);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btn.addActionListener(e -> JOptionPane.showMessageDialog(this, text + " clicked!"));
+        btn.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
+
+        // Add hover effect
+        btn.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                btn.setBackground(new Color(30, 144, 255));
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                btn.setBackground(new Color(70, 130, 180));
+            }
+        });
+
+        // Add appropriate actions
+        switch (text) {
+            case "Schedule":
+                btn.addActionListener(e -> showFeatureMessage("Schedule feature coming soon!"));
+                break;
+            case "Notifications":
+                btn.addActionListener(e -> showFeatureMessage("Notifications feature coming soon!"));
+                break;
+            case "Settings":
+                btn.addActionListener(e -> showFeatureMessage("Settings feature coming soon!"));
+                break;
+            case "Profile":
+                btn.addActionListener(e -> showFeatureMessage("Profile feature coming soon!"));
+                break;
+        }
+
         return btn;
+    }
+
+    private void showFeatureMessage(String message) {
+        JOptionPane.showMessageDialog(this, message, "Feature Preview", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private JLabel createStyledLabel(String text, Font font) {
@@ -178,8 +319,49 @@ public class Dashboard extends JFrame {
         JLabel label = new JLabel("N/A");
         label.setFont(font);
         label.setForeground(new Color(33, 37, 41));
+        label.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(220, 220, 220)),
+                BorderFactory.createEmptyBorder(5, 10, 5, 10)
+        ));
         return label;
     }
+
+    // ===== MAP INTEGRATION METHODS =====
+
+    private void openInteractiveMap() {
+        JFrame mapFrame = new JFrame("Interactive Campus Navigation");
+        mapFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        mapFrame.setSize(900, 800);
+        mapFrame.setLocationRelativeTo(this);
+
+        MapPanel mapPanel = new MapPanel();
+        mapFrame.add(mapPanel);
+
+        mapFrame.setVisible(true);
+    }
+
+    private void openInteractiveMapWithDestination(String destination) {
+        JFrame mapFrame = new JFrame("Navigation to: " + destination);
+        mapFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        mapFrame.setSize(900, 800);
+        mapFrame.setLocationRelativeTo(this);
+
+        MapPanel mapPanel = new MapPanel();
+
+        // Pre-select the destination in the map panel
+        // You'll need to add a setDestination method to MapPanel
+        try {
+            java.lang.reflect.Method setDestMethod = mapPanel.getClass().getMethod("setDestination", String.class);
+            setDestMethod.invoke(mapPanel, destination);
+        } catch (Exception e) {
+            System.out.println("Could not pre-select destination: " + e.getMessage());
+        }
+
+        mapFrame.add(mapPanel);
+        mapFrame.setVisible(true);
+    }
+
+    // ===== USER MANAGEMENT METHODS =====
 
     public void setUserData(User user) {
         nameLabel.setText(user.getName());
@@ -191,14 +373,28 @@ public class Dashboard extends JFrame {
     }
 
     private void logout() {
-        this.dispose();
-        Login login = new Login();
-        login.setVisible(true);
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "Are you sure you want to logout?",
+                "Confirm Logout",
+                JOptionPane.YES_NO_OPTION);
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            this.dispose();
+            Login login = new Login();
+            login.setVisible(true);
+        }
     }
+
+    // ===== MAIN METHOD FOR TESTING =====
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             Dashboard dashboard = new Dashboard();
+
+            // Test with sample user data
+            User testUser = new User("John", "Doe", "ST123456", 21, "Male", "john.doe@email.com");
+            dashboard.setUserData(testUser);
+
             dashboard.setVisible(true);
         });
     }

@@ -113,11 +113,4 @@ public class CampusMap extends JFrame {
 
         directionsArea.setText(directions.toString());
     }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            CampusMap map = new CampusMap();
-            map.setVisible(true);
-        });
-    }
 }

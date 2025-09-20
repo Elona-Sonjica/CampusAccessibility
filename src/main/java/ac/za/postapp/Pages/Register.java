@@ -67,14 +67,16 @@ public class Register extends JFrame {
         addLabelAndField(formPanel, gbc, 3, "Age:", ageField = new JTextField(20));
 
         // ====== Gender ======
-        gbc.gridx = 0; gbc.gridy = 4;
+        gbc.gridx = 0;
+        gbc.gridy = 4;
         gbc.anchor = GridBagConstraints.WEST;
         JLabel genderLabel = new JLabel("Gender:");
         genderLabel.setFont(labelFont);
         genderLabel.setForeground(new Color(52, 73, 94));
         formPanel.add(genderLabel, gbc);
 
-        gbc.gridx = 1; gbc.gridy = 4;
+        gbc.gridx = 1;
+        gbc.gridy = 4;
         String[] genders = {"Male", "Female", "Other"};
         genderComboBox = new JComboBox<>(genders);
         genderComboBox.setFont(new Font("Segoe UI", Font.PLAIN, 13));
@@ -84,13 +86,15 @@ public class Register extends JFrame {
         addLabelAndField(formPanel, gbc, 5, "Email:", emailField = new JTextField(20));
 
         // ====== Password ======
-        gbc.gridx = 0; gbc.gridy = 6;
+        gbc.gridx = 0;
+        gbc.gridy = 6;
         JLabel passwordLabel = new JLabel("Password:");
         passwordLabel.setFont(labelFont);
         passwordLabel.setForeground(new Color(52, 73, 94));
         formPanel.add(passwordLabel, gbc);
 
-        gbc.gridx = 1; gbc.gridy = 6;
+        gbc.gridx = 1;
+        gbc.gridy = 6;
         passwordField = new JPasswordField(20);
         passwordField.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         passwordField.setBorder(BorderFactory.createCompoundBorder(
@@ -100,13 +104,15 @@ public class Register extends JFrame {
         formPanel.add(passwordField, gbc);
 
         // ====== Confirm Password ======
-        gbc.gridx = 0; gbc.gridy = 7;
+        gbc.gridx = 0;
+        gbc.gridy = 7;
         JLabel confirmPasswordLabel = new JLabel("Confirm Password:");
         confirmPasswordLabel.setFont(labelFont);
         confirmPasswordLabel.setForeground(new Color(52, 73, 94));
         formPanel.add(confirmPasswordLabel, gbc);
 
-        gbc.gridx = 1; gbc.gridy = 7;
+        gbc.gridx = 1;
+        gbc.gridy = 7;
         confirmPasswordField = new JPasswordField(20);
         confirmPasswordField.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         confirmPasswordField.setBorder(BorderFactory.createCompoundBorder(
@@ -156,7 +162,8 @@ public class Register extends JFrame {
         label.setFont(labelFont);
         label.setForeground(new Color(52, 73, 94));
 
-        gbc.gridx = 0; gbc.gridy = row;
+        gbc.gridx = 0;
+        gbc.gridy = row;
         gbc.anchor = GridBagConstraints.WEST;
         panel.add(label, gbc);
 
@@ -166,7 +173,8 @@ public class Register extends JFrame {
                 BorderFactory.createEmptyBorder(5, 8, 5, 8)
         ));
 
-        gbc.gridx = 1; gbc.gridy = row;
+        gbc.gridx = 1;
+        gbc.gridy = row;
         panel.add(field, gbc);
     }
 
@@ -185,6 +193,7 @@ public class Register extends JFrame {
             public void mouseEntered(java.awt.event.MouseEvent evt) {
                 button.setBackground(baseColor.darker());
             }
+
             public void mouseExited(java.awt.event.MouseEvent evt) {
                 button.setBackground(baseColor);
             }
@@ -294,7 +303,6 @@ public class Register extends JFrame {
         Login login = new Login();
         login.setVisible(true);
     }
-
     public static void main(String[] args) {
         // Initialize database connection
         DatabaseConnection.initializeDatabase();
