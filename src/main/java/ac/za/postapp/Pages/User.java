@@ -1,10 +1,8 @@
 package ac.za.postapp.Pages;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 public class User {
-    private int id;
     private String name;
     private String surname;
     private String studentNumber;
@@ -13,7 +11,7 @@ public class User {
     private String email;
     private String passwordHash;
 
-    //  preferences
+    // Accessibility preferences
     private String deviceType;
     private boolean avoidStairs;
     private boolean preferRamps;
@@ -21,6 +19,7 @@ public class User {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    // Constructors
     public User() {}
 
     public User(String name, String surname, String studentNumber, int age,
@@ -38,6 +37,7 @@ public class User {
         this.createdAt = LocalDateTime.now();
     }
 
+    // Enhanced constructor with accessibility
     public User(String name, String surname, String studentNumber, int age,
                 String gender, String email, String deviceType,
                 boolean avoidStairs, boolean preferRamps, Integer minPathWidthCm) {
@@ -54,9 +54,7 @@ public class User {
         this.createdAt = LocalDateTime.now();
     }
 
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
-
+    // Getters and Setters
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
 
@@ -95,4 +93,15 @@ public class User {
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "name='" + name + '\'' +
+                ", surname='" + surname + '\'' +
+                ", studentNumber='" + studentNumber + '\'' +
+                ", email='" + email + '\'' +
+                ", deviceType='" + deviceType + '\'' +
+                '}';
+    }
 }

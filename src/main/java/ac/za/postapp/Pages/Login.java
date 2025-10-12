@@ -4,11 +4,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import org.mindrot.jbcrypt.BCrypt;
 
 public class Login extends JFrame {
     private JTextField emailField;
@@ -81,7 +76,7 @@ public class Login extends JFrame {
                 BorderFactory.createLineBorder(new Color(180, 180, 180)),
                 BorderFactory.createEmptyBorder(5, 8, 5, 8)
         ));
-        passwordField.setEchoChar('•'); // Set password character
+        passwordField.setEchoChar('•');
         formPanel.add(passwordField, gbc);
 
         // ==== Show Password Checkbox ====
@@ -94,9 +89,9 @@ public class Login extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (showPasswordCheckBox.isSelected()) {
-                    passwordField.setEchoChar((char) 0); // Show password
+                    passwordField.setEchoChar((char) 0);
                 } else {
-                    passwordField.setEchoChar('•'); // Hide password
+                    passwordField.setEchoChar('•');
                 }
             }
         });
@@ -126,7 +121,6 @@ public class Login extends JFrame {
             }
         });
 
-        // Add Enter key listener to login button
         getRootPane().setDefaultButton(loginButton);
 
         buttonPanel.add(loginButton);
@@ -139,23 +133,23 @@ public class Login extends JFrame {
         add(mainPanel);
     }
 
-    // Helper method to style buttons
-    private void styleButton(JButton button, Color baseColor) {
+    private void styleButton(JButton button, Color backgroundColor) {
         button.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        button.setBackground(baseColor);
-        button.setForeground(Color.WHITE);
+        button.setBackground(backgroundColor);
+        button.setForeground(Color.WHITE); // Ensure text is white
         button.setFocusPainted(false);
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
         button.setPreferredSize(new Dimension(120, 40));
         button.setBorder(BorderFactory.createEmptyBorder(8, 20, 8, 20));
 
-        // Hover effect
         button.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent evt) {
-                button.setBackground(baseColor.darker());
+                button.setBackground(backgroundColor.darker());
+                button.setForeground(Color.WHITE); // Keep text white on hover
             }
             public void mouseExited(java.awt.event.MouseEvent evt) {
-                button.setBackground(baseColor);
+                button.setBackground(backgroundColor);
+                button.setForeground(Color.WHITE); // Keep text white
             }
         });
     }
@@ -169,56 +163,38 @@ public class Login extends JFrame {
             return;
         }
 
-        // Validate email format
         if (!isValidEmail(email)) {
             JOptionPane.showMessageDialog(this, "Please enter a valid email address", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        // Database authentication
-        try (Connection conn = DatabaseConnection.getConnection()) {
-            String sql = "SELECT * FROM users WHERE email = ?";
-            PreparedStatement pstmt = conn.prepareStatement(sql);
-            pstmt.setString(1, email);
+        // Try database authentication first
+        try {
+            User user = UserDAO.loginUser(email, password);
 
-            ResultSet rs = pstmt.executeQuery();
-
-            if (rs.next()) {
-                // Check password using BCrypt
-                String hashedPassword = rs.getString("password_hash");
-                if (BCrypt.checkpw(password, hashedPassword)) {
-                    // Login successful
-                    User user = new User(
-                            rs.getString("name"),
-                            rs.getString("surname"),
-                            rs.getString("student_number"),
-                            rs.getInt("age"),
-                            rs.getString("gender"),
-                            rs.getString("email")
-                    );
-
-                    // Create session token
-                    String sessionToken = SessionManager.createSession(rs.getInt("id"));
-
-                    if (sessionToken != null) {
-                        JOptionPane.showMessageDialog(this, "Login successful!", "Success", JOptionPane.INFORMATION_MESSAGE);
-                        openDashboard(user);
-                    } else {
-                        JOptionPane.showMessageDialog(this, "Session creation failed", "Error", JOptionPane.ERROR_MESSAGE);
-                    }
-                } else {
-                    JOptionPane.showMessageDialog(this, "Invalid email or password", "Error", JOptionPane.ERROR_MESSAGE);
-                }
-            } else {
-                JOptionPane.showMessageDialog(this, "Invalid email or password", "Error", JOptionPane.ERROR_MESSAGE);
+            if (user != null) {
+                JOptionPane.showMessageDialog(this, "Login successful!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                openDashboard(user);
+                return;
             }
-        } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(this, "Database error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-            ex.printStackTrace();
+        } catch (Exception e) {
+            System.err.println("Database login failed: " + e.getMessage());
+        }
+
+        // If database login fails, offer demo mode
+        int result = JOptionPane.showConfirmDialog(this,
+                "Login failed or database not available. Would you like to continue with a demo account?",
+                "Demo Mode", JOptionPane.YES_NO_OPTION);
+
+        if (result == JOptionPane.YES_OPTION) {
+            User demoUser = new User("Demo", "User", "ST000001", 25, "Other",
+                    email, "None", false, false, 90);
+            openDashboard(demoUser);
+        } else {
+            JOptionPane.showMessageDialog(this, "Invalid email or password", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    // Email validation method
     private boolean isValidEmail(String email) {
         String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
         return email.matches(emailRegex);
@@ -238,10 +214,10 @@ public class Login extends JFrame {
     }
 
     public static void main(String[] args) {
-        // Initialize database connection
+        // Initialize database and create tables
         DatabaseConnection.initializeDatabase();
+        UserDAO.createUsersTable();
 
-        // Set look and feel to system default
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (Exception e) {

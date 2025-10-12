@@ -1,15 +1,15 @@
 package ac.za.postapp.Pages;
 
 import java.sql.*;
-import java.util.UUID;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.UUID;
 
 public class SessionManager {
 
     public static String createSession(int userId) {
         String token = UUID.randomUUID().toString();
-        LocalDateTime expiresAt = LocalDateTime.now().plus(7, ChronoUnit.DAYS); // 7-day session
+        LocalDateTime expiresAt = LocalDateTime.now().plus(7, ChronoUnit.DAYS);
 
         String sql = "INSERT INTO sessions (user_id, session_token, expires_at) VALUES (?, ?, ?)";
 
