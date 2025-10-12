@@ -25,7 +25,6 @@ public class DatabaseConnection {
     }
 
     public static void initializeDatabase() {
-        // For MySQL, we assume the database and tables are created manually
         try (Connection conn = getConnection()) {
             System.out.println("Database connection established successfully");
 

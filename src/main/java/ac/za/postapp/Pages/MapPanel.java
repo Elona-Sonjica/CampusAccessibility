@@ -412,11 +412,16 @@ public class MapPanel extends JPanel {
         }
         return "Unknown Location";
     }
-
-    // Method to set destination from Dashboard
+    //Set destination from this class
     public void setDestination(String destination) {
         if (endComboBox != null) {
-            endComboBox.setSelectedItem(destination);
+            // Try to find and select the destination
+            for (int i = 0; i < endComboBox.getItemCount(); i++) {
+                if (endComboBox.getItemAt(i).equals(destination)) {
+                    endComboBox.setSelectedIndex(i);
+                    break;
+                }
+            }
         }
     }
 

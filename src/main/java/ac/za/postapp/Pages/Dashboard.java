@@ -19,6 +19,9 @@ public class Dashboard extends JFrame {
     // Map button
     private JButton mapButton;
 
+    // Store current user
+    private User currentUser;
+
     public Dashboard() {
         setTitle("Dashboard - CPUT Campus D6");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -50,7 +53,7 @@ public class Dashboard extends JFrame {
         panel.setBackground(new Color(52, 73, 94));
         panel.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
 
-        String[] topOptions = {"Schedule", "Notifications", "Settings", "Profile"};
+        String[] topOptions = {"Schedule", "Notifications", "Settings", "Profile" , "Facilities"};
         for (String option : topOptions) {
             JButton btn = createMenuButton(option);
             panel.add(btn);
@@ -101,12 +104,11 @@ public class Dashboard extends JFrame {
 
     private JPanel createUserInfoPanel(Font labelFont, Font valueFont) {
         JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBorder(BorderFactory.createTitledBorder("Personal Information"));
-        panel.setBackground(Color.WHITE);
         panel.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createTitledBorder("Personal Information"),
                 BorderFactory.createEmptyBorder(10, 10, 10, 10)
         ));
+        panel.setBackground(Color.WHITE);
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 10, 5, 10);
@@ -179,7 +181,7 @@ public class Dashboard extends JFrame {
         gbc.gridx = 0; gbc.gridy = row;
         panel.add(createStyledLabel("Faculty:", labelFont), gbc);
         gbc.gridx = 1;
-        String[] faculties = {"Engineering", "Health Sciences", "Business", "Education", "Applied Sciences"};
+        String[] faculties = {"Engineering", "Health Sciences", "Business", "Education", "Applied Sciences" ,  "informatics and Design"};
         facultyComboBox = new JComboBox<>(faculties);
         facultyComboBox.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         panel.add(facultyComboBox, gbc);
@@ -214,7 +216,7 @@ public class Dashboard extends JFrame {
         JPanel quickNavPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
         quickNavPanel.setBackground(Color.WHITE);
 
-        String[] quickLocations = {"Library", "Food Court", "Computer Lab", "Toilets"};
+        String[] quickLocations = {"Entry/Exit", "Lab 1.19", "Lab 1.11", "Toilets"};
         for (String location : quickLocations) {
             JButton btn = new JButton(location);
             btn.setFont(new Font("Segoe UI", Font.PLAIN, 12));
@@ -288,24 +290,26 @@ public class Dashboard extends JFrame {
         // Add appropriate actions
         switch (text) {
             case "Schedule":
-                btn.addActionListener(e -> showFeatureMessage("Schedule feature coming soon!"));
+                btn.addActionListener(e -> openSchedule());
                 break;
             case "Notifications":
-                btn.addActionListener(e -> showFeatureMessage("Notifications feature coming soon!"));
+                btn.addActionListener(e -> openNotifications());
                 break;
             case "Settings":
-                btn.addActionListener(e -> showFeatureMessage("Settings feature coming soon!"));
+                btn.addActionListener(e -> openSettings());
                 break;
             case "Profile":
-                btn.addActionListener(e -> showFeatureMessage("Profile feature coming soon!"));
+                btn.addActionListener(e -> openProfile());
+                break;
+            case "Facilities":
+                btn.addActionListener(e -> openFacilities());
+                break;
+            case "Campus Map":
+                btn.addActionListener(e -> openInteractiveMap());
                 break;
         }
 
         return btn;
-    }
-
-    private void showFeatureMessage(String message) {
-        JOptionPane.showMessageDialog(this, message, "Feature Preview", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private JLabel createStyledLabel(String text, Font font) {
@@ -326,7 +330,35 @@ public class Dashboard extends JFrame {
         return label;
     }
 
-    // ===== MAP INTEGRATION METHODS =====
+    // ===== INTEGRATED PAGES METHODS =====
+
+    private void openSchedule() {
+        SchedulePage schedule = new SchedulePage(this);
+        schedule.setVisible(true);
+    }
+
+    private void openNotifications() {
+        NotificationsPage notifications = new NotificationsPage(this);
+        notifications.setVisible(true);
+    }
+
+    private void openSettings() {
+        SettingsPage settings = new SettingsPage(this);
+        settings.setVisible(true);
+    }
+
+    private void openProfile() {
+        if (currentUser != null) {
+            ProfilePage profile = new ProfilePage(this, currentUser);
+            profile.setVisible(true);
+        } else {
+            JOptionPane.showMessageDialog(this, "User data not available", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+    private void openFacilities() {
+        FacultyPage facilities = new FacultyPage();
+        facilities.setVisible(true);
+    }
 
     private void openInteractiveMap() {
         JFrame mapFrame = new JFrame("Interactive Campus Navigation");
@@ -349,10 +381,8 @@ public class Dashboard extends JFrame {
         MapPanel mapPanel = new MapPanel();
 
         // Pre-select the destination in the map panel
-        // You'll need to add a setDestination method to MapPanel
         try {
-            java.lang.reflect.Method setDestMethod = mapPanel.getClass().getMethod("setDestination", String.class);
-            setDestMethod.invoke(mapPanel, destination);
+            mapPanel.setDestination(destination);
         } catch (Exception e) {
             System.out.println("Could not pre-select destination: " + e.getMessage());
         }
@@ -364,12 +394,21 @@ public class Dashboard extends JFrame {
     // ===== USER MANAGEMENT METHODS =====
 
     public void setUserData(User user) {
+        this.currentUser = user;
         nameLabel.setText(user.getName());
         surnameLabel.setText(user.getSurname());
         studentNumberLabel.setText(user.getStudentNumber());
         ageLabel.setText(String.valueOf(user.getAge()));
         genderLabel.setText(user.getGender());
         emailLabel.setText(user.getEmail());
+
+        // Set default values for navigation fields
+        if (courseField != null) {
+            courseField.setText("Applications Development");
+        }
+        if (facultyComboBox != null) {
+            facultyComboBox.setSelectedItem("informatics and Design");
+        }
     }
 
     private void logout() {
