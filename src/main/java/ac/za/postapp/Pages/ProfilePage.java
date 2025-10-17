@@ -2,6 +2,9 @@ package ac.za.postapp.Pages;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.geom.RoundRectangle2D;
 
 public class ProfilePage extends JDialog {
     private User currentUser;
@@ -12,232 +15,545 @@ public class ProfilePage extends JDialog {
     private JComboBox<String> genderComboBox;
     private JTextField emailField;
     private JTextField phoneField;
-    private JComboBox<String> facultyComboBox; // Changed from JTextField to JComboBox<String>
+    private JComboBox<String> facultyComboBox;
     private JTextField courseField;
     private JTextArea bioArea;
     private JLabel avatarLabel;
+    private JFrame parentFrame;
 
     public ProfilePage(JFrame parent, User user) {
-        super(parent, "User Profile", true);
+        super(parent, "👤 User Profile - Campus Access Guide", true);
         this.currentUser = user;
-        setSize(700, 600);
+        this.parentFrame = parent;
+        setSize(800, 700);
         setLocationRelativeTo(parent);
         setLayout(new BorderLayout(10, 10));
+        setResizable(false);
 
-        // Main panel
-        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
-        mainPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
-        mainPanel.setBackground(new Color(245, 247, 250));
+        // Main panel with gradient background
+        JPanel mainPanel = new JPanel(new BorderLayout(10, 10)) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g;
+                GradientPaint gradient = new GradientPaint(
+                        0, 0, new Color(245, 247, 250),
+                        getWidth(), getHeight(), new Color(220, 230, 240)
+                );
+                g2d.setPaint(gradient);
+                g2d.fillRect(0, 0, getWidth(), getHeight());
+            }
+        };
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        // Title
-        JLabel titleLabel = new JLabel("👤 User Profile", SwingConstants.CENTER);
-        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        titleLabel.setForeground(new Color(52, 73, 94));
-        mainPanel.add(titleLabel, BorderLayout.NORTH);
+        // Header Panel
+        JPanel headerPanel = createHeaderPanel();
+        mainPanel.add(headerPanel, BorderLayout.NORTH);
 
         // Content panel with tabs
-        JTabbedPane tabbedPane = new JTabbedPane();
-        tabbedPane.setFont(new Font("Segoe UI", Font.BOLD, 12));
-
-        tabbedPane.addTab("Personal Info", createPersonalInfoPanel());
-        tabbedPane.addTab("Academic Info", createAcademicInfoPanel());
-        tabbedPane.addTab("Preferences", createPreferencesPanel());
-
+        JTabbedPane tabbedPane = createTabbedPane();
         mainPanel.add(tabbedPane, BorderLayout.CENTER);
 
         // Button panel
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        buttonPanel.setBackground(new Color(245, 247, 250));
-
-        JButton saveButton = new JButton("Save Profile");
-        styleButton(saveButton, new Color(40, 167, 69));
-        saveButton.addActionListener(e -> saveProfile());
-
-        JButton cancelButton = new JButton("Cancel");
-        styleButton(cancelButton, new Color(108, 117, 125));
-        cancelButton.addActionListener(e -> dispose());
-
-        JButton changeAvatarButton = new JButton("Change Avatar");
-        styleButton(changeAvatarButton, new Color(70, 130, 180));
-        changeAvatarButton.addActionListener(e -> changeAvatar());
-
-        buttonPanel.add(changeAvatarButton);
-        buttonPanel.add(cancelButton);
-        buttonPanel.add(saveButton);
-
+        JPanel buttonPanel = createButtonPanel();
         mainPanel.add(buttonPanel, BorderLayout.SOUTH);
 
         add(mainPanel);
         loadUserData();
     }
 
-    private JPanel createPersonalInfoPanel() {
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        panel.setBackground(Color.WHITE);
+    private JPanel createHeaderPanel() {
+        JPanel headerPanel = new JPanel(new BorderLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2d = (Graphics2D) g;
+                GradientPaint gradient = new GradientPaint(
+                        0, 0, new Color(74, 107, 136),
+                        getWidth(), getHeight(), new Color(33, 64, 98)
+                );
+                g2d.setPaint(gradient);
+                g2d.fillRect(0, 0, getWidth(), getHeight());
+            }
+        };
+        headerPanel.setPreferredSize(new Dimension(getWidth(), 80));
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(15, 20, 15, 20));
 
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 10, 10, 10);
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        // Back button
+        JButton backButton = createModernButton("← Back", new Color(108, 117, 125));
+        backButton.addActionListener(e -> dispose());
+
+        // Title
+        JLabel titleLabel = new JLabel("👤 User Profile", SwingConstants.CENTER);
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        titleLabel.setForeground(Color.WHITE);
+
+        JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        titlePanel.setOpaque(false);
+        titlePanel.add(titleLabel);
+
+        headerPanel.add(backButton, BorderLayout.WEST);
+        headerPanel.add(titlePanel, BorderLayout.CENTER);
+
+        return headerPanel;
+    }
+
+    private JTabbedPane createTabbedPane() {
+        JTabbedPane tabbedPane = new JTabbedPane();
+        tabbedPane.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        tabbedPane.setBackground(new Color(245, 247, 250));
+
+        // Create tab panels with glass morphism effect
+        tabbedPane.addTab("📝 Personal Info", createPersonalInfoPanel());
+        tabbedPane.addTab("🎓 Academic Info", createAcademicInfoPanel());
+        tabbedPane.addTab("⚙️ Preferences", createPreferencesPanel());
+
+        return tabbedPane;
+    }
+
+    private JPanel createPersonalInfoPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        panel.setOpaque(false);
 
         // Avatar section
-        gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2;
+        JPanel avatarPanel = createAvatarPanel();
+        panel.add(avatarPanel, BorderLayout.NORTH);
+
+        // Form section
+        JPanel formPanel = createPersonalInfoForm();
+        panel.add(formPanel, BorderLayout.CENTER);
+
+        return panel;
+    }
+
+    private JPanel createAvatarPanel() {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        panel.setOpaque(false);
+        panel.setBorder(BorderFactory.createEmptyBorder(0, 0, 20, 0));
+
         avatarLabel = new JLabel("", SwingConstants.CENTER);
-        avatarLabel.setPreferredSize(new Dimension(100, 100));
+        avatarLabel.setPreferredSize(new Dimension(120, 120));
         avatarLabel.setOpaque(true);
         avatarLabel.setBackground(new Color(70, 130, 180));
         avatarLabel.setForeground(Color.WHITE);
-        avatarLabel.setFont(new Font("Segoe UI", Font.BOLD, 40));
+        avatarLabel.setFont(new Font("Segoe UI", Font.BOLD, 36));
         avatarLabel.setText(String.valueOf(currentUser.getName().charAt(0)) +
                 String.valueOf(currentUser.getSurname().charAt(0)));
-        avatarLabel.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY, 2));
-        panel.add(avatarLabel, gbc);
+        avatarLabel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(52, 152, 219), 3),
+                BorderFactory.createEmptyBorder(10, 10, 10, 10)
+        ));
 
-        // Personal information fields
-        gbc.gridy = 1; gbc.gridwidth = 1;
-        panel.add(new JLabel("Name:"), gbc);
+        // Make avatar circular
+        avatarLabel = new JLabel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2d = (Graphics2D) g.create();
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                // Draw circular background
+                g2d.setColor(new Color(70, 130, 180));
+                g2d.fillOval(0, 0, getWidth(), getHeight());
+
+                // Draw text
+                g2d.setColor(Color.WHITE);
+                g2d.setFont(new Font("Segoe UI", Font.BOLD, 36));
+                FontMetrics fm = g2d.getFontMetrics();
+                String text = String.valueOf(currentUser.getName().charAt(0)) +
+                        String.valueOf(currentUser.getSurname().charAt(0));
+                int x = (getWidth() - fm.stringWidth(text)) / 2;
+                int y = (getHeight() - fm.getHeight()) / 2 + fm.getAscent();
+                g2d.drawString(text, x, y);
+
+                g2d.dispose();
+            }
+        };
+        avatarLabel.setPreferredSize(new Dimension(120, 120));
+        avatarLabel.setOpaque(false);
+
+        panel.add(avatarLabel);
+
+        return panel;
+    }
+
+    private JPanel createPersonalInfoForm() {
+        JPanel panel = new JPanel(new GridBagLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2d = (Graphics2D) g.create();
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                g2d.setColor(new Color(255, 255, 255, 230));
+                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
+
+                g2d.setColor(new Color(255, 255, 255, 150));
+                g2d.setStroke(new BasicStroke(2));
+                g2d.drawRoundRect(1, 1, getWidth()-2, getHeight()-2, 20, 20);
+
+                g2d.dispose();
+            }
+        };
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        panel.setOpaque(false);
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(12, 12, 12, 12);
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
+
+        Font labelFont = new Font("Segoe UI", Font.BOLD, 13);
+        Color labelColor = new Color(52, 73, 94);
+
+        int row = 0;
+
+        // Name
+        gbc.gridx = 0; gbc.gridy = row;
+        panel.add(createStyledLabel("👤 Name:", labelFont, labelColor), gbc);
         gbc.gridx = 1;
-        nameField = new JTextField(20);
+        nameField = createStyledTextField();
         panel.add(nameField, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 2;
-        panel.add(new JLabel("Surname:"), gbc);
+        row++;
+        gbc.gridx = 0; gbc.gridy = row;
+        panel.add(createStyledLabel("👥 Surname:", labelFont, labelColor), gbc);
         gbc.gridx = 1;
-        surnameField = new JTextField(20);
+        surnameField = createStyledTextField();
         panel.add(surnameField, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 3;
-        panel.add(new JLabel("Student Number:"), gbc);
+        row++;
+        gbc.gridx = 0; gbc.gridy = row;
+        panel.add(createStyledLabel("🎫 Student Number:", labelFont, labelColor), gbc);
         gbc.gridx = 1;
-        studentNumberField = new JTextField(20);
-        studentNumberField.setEditable(false); // Cannot change student number
+        studentNumberField = createStyledTextField();
+        studentNumberField.setEditable(false);
+        studentNumberField.setBackground(new Color(240, 240, 240));
         panel.add(studentNumberField, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 4;
-        panel.add(new JLabel("Age:"), gbc);
+        row++;
+        gbc.gridx = 0; gbc.gridy = row;
+        panel.add(createStyledLabel("🎂 Age:", labelFont, labelColor), gbc);
         gbc.gridx = 1;
-        ageField = new JTextField(20);
+        ageField = createStyledTextField();
         panel.add(ageField, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 5;
-        panel.add(new JLabel("Gender:"), gbc);
+        row++;
+        gbc.gridx = 0; gbc.gridy = row;
+        panel.add(createStyledLabel("⚧ Gender:", labelFont, labelColor), gbc);
         gbc.gridx = 1;
         String[] genders = {"Male", "Female", "Other", "Prefer not to say"};
-        genderComboBox = new JComboBox<>(genders);
+        genderComboBox = createStyledComboBox(genders);
         panel.add(genderComboBox, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 6;
-        panel.add(new JLabel("Email:"), gbc);
+        row++;
+        gbc.gridx = 0; gbc.gridy = row;
+        panel.add(createStyledLabel("📧 Email:", labelFont, labelColor), gbc);
         gbc.gridx = 1;
-        emailField = new JTextField(20);
+        emailField = createStyledTextField();
         panel.add(emailField, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 7;
-        panel.add(new JLabel("Phone:"), gbc);
+        row++;
+        gbc.gridx = 0; gbc.gridy = row;
+        panel.add(createStyledLabel("📱 Phone:", labelFont, labelColor), gbc);
         gbc.gridx = 1;
-        phoneField = new JTextField(20);
+        phoneField = createStyledTextField();
         panel.add(phoneField, gbc);
 
         return panel;
     }
 
     private JPanel createAcademicInfoPanel() {
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        panel.setBackground(Color.WHITE);
+        JPanel panel = new JPanel(new GridBagLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2d = (Graphics2D) g.create();
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                g2d.setColor(new Color(255, 255, 255, 230));
+                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
+
+                g2d.setColor(new Color(255, 255, 255, 150));
+                g2d.setStroke(new BasicStroke(2));
+                g2d.drawRoundRect(1, 1, getWidth()-2, getHeight()-2, 20, 20);
+
+                g2d.dispose();
+            }
+        };
+        panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
+        panel.setOpaque(false);
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.insets = new Insets(12, 12, 12, 12);
         gbc.anchor = GridBagConstraints.WEST;
         gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
 
-        gbc.gridx = 0; gbc.gridy = 0;
-        panel.add(new JLabel("Faculty:"), gbc);
+        Font labelFont = new Font("Segoe UI", Font.BOLD, 13);
+        Color labelColor = new Color(52, 73, 94);
+
+        int row = 0;
+
+        gbc.gridx = 0; gbc.gridy = row;
+        panel.add(createStyledLabel("🏛️ Faculty:", labelFont, labelColor), gbc);
         gbc.gridx = 1;
         String[] faculties = {"Engineering", "Health Sciences", "Business", "Education", "Applied Sciences", "Informatics & Design"};
-        facultyComboBox = new JComboBox<>(faculties); // Now correctly declared as JComboBox<String>
+        facultyComboBox = createStyledComboBox(faculties);
         panel.add(facultyComboBox, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 1;
-        panel.add(new JLabel("Course:"), gbc);
+        row++;
+        gbc.gridx = 0; gbc.gridy = row;
+        panel.add(createStyledLabel("📚 Course:", labelFont, labelColor), gbc);
         gbc.gridx = 1;
-        courseField = new JTextField(20);
+        courseField = createStyledTextField();
         panel.add(courseField, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 2;
-        panel.add(new JLabel("Year of Study:"), gbc);
+        row++;
+        gbc.gridx = 0; gbc.gridy = row;
+        panel.add(createStyledLabel("🎓 Year of Study:", labelFont, labelColor), gbc);
         gbc.gridx = 1;
         String[] years = {"1st Year", "2nd Year", "3rd Year", "4th Year", "Postgraduate"};
-        JComboBox<String> yearComboBox = new JComboBox<>(years);
+        JComboBox<String> yearComboBox = createStyledComboBox(years);
         panel.add(yearComboBox, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 3;
-        panel.add(new JLabel("Student Type:"), gbc);
+        row++;
+        gbc.gridx = 0; gbc.gridy = row;
+        panel.add(createStyledLabel("🎯 Student Type:", labelFont, labelColor), gbc);
         gbc.gridx = 1;
         String[] types = {"Full-time", "Part-time", "Distance Learning", "Exchange"};
-        JComboBox<String> typeComboBox = new JComboBox<>(types);
+        JComboBox<String> typeComboBox = createStyledComboBox(types);
         panel.add(typeComboBox, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 4;
-        panel.add(new JLabel("Expected Graduation:"), gbc);
+        row++;
+        gbc.gridx = 0; gbc.gridy = row;
+        panel.add(createStyledLabel("🎓 Expected Graduation:", labelFont, labelColor), gbc);
         gbc.gridx = 1;
         String[] graduationYears = new String[5];
         int currentYear = java.time.Year.now().getValue();
         for (int i = 0; i < 5; i++) {
             graduationYears[i] = String.valueOf(currentYear + i);
         }
-        JComboBox<String> graduationComboBox = new JComboBox<>(graduationYears);
+        JComboBox<String> graduationComboBox = createStyledComboBox(graduationYears);
         panel.add(graduationComboBox, gbc);
 
         return panel;
     }
 
     private JPanel createPreferencesPanel() {
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        panel.setBackground(Color.WHITE);
+        JPanel panel = new JPanel(new GridBagLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2d = (Graphics2D) g.create();
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                g2d.setColor(new Color(255, 255, 255, 230));
+                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
+
+                g2d.setColor(new Color(255, 255, 255, 150));
+                g2d.setStroke(new BasicStroke(2));
+                g2d.drawRoundRect(1, 1, getWidth()-2, getHeight()-2, 20, 20);
+
+                g2d.dispose();
+            }
+        };
+        panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
+        panel.setOpaque(false);
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.insets = new Insets(12, 12, 12, 12);
         gbc.anchor = GridBagConstraints.WEST;
         gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
 
-        gbc.gridx = 0; gbc.gridy = 0;
-        panel.add(new JLabel("Bio:"), gbc);
+        Font labelFont = new Font("Segoe UI", Font.BOLD, 13);
+        Color labelColor = new Color(52, 73, 94);
+
+        int row = 0;
+
+        gbc.gridx = 0; gbc.gridy = row;
+        panel.add(createStyledLabel("📝 Bio:", labelFont, labelColor), gbc);
         gbc.gridx = 1;
         bioArea = new JTextArea(4, 20);
         bioArea.setLineWrap(true);
         bioArea.setWrapStyleWord(true);
+        bioArea.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         bioArea.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(180, 180, 180)),
-                BorderFactory.createEmptyBorder(5, 8, 5, 8)
+                BorderFactory.createLineBorder(new Color(200, 200, 200), 2),
+                BorderFactory.createEmptyBorder(8, 10, 8, 10)
         ));
         JScrollPane bioScroll = new JScrollPane(bioArea);
+        bioScroll.setBorder(BorderFactory.createEmptyBorder());
         panel.add(bioScroll, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 1;
-        panel.add(new JLabel("Notification Preferences:"), gbc);
+        row++;
+        gbc.gridx = 0; gbc.gridy = row;
+        panel.add(createStyledLabel("🔔 Notification Preferences:", labelFont, labelColor), gbc);
         gbc.gridx = 1;
-        JCheckBox emailNotifications = new JCheckBox("Email Notifications");
-        emailNotifications.setSelected(true);
-        panel.add(emailNotifications, gbc);
+        JPanel notificationPanel = new JPanel(new GridLayout(2, 1, 5, 5));
+        notificationPanel.setOpaque(false);
 
-        gbc.gridx = 0; gbc.gridy = 2;
-        panel.add(new JLabel(""), gbc);
-        gbc.gridx = 1;
-        JCheckBox smsNotifications = new JCheckBox("SMS Notifications");
-        smsNotifications.setSelected(false);
-        panel.add(smsNotifications, gbc);
+        JCheckBox emailNotifications = createStyledCheckBox("📧 Email Notifications", true);
+        JCheckBox smsNotifications = createStyledCheckBox("💬 SMS Notifications", false);
 
-        gbc.gridx = 0; gbc.gridy = 3;
-        panel.add(new JLabel("Privacy Settings:"), gbc);
+        notificationPanel.add(emailNotifications);
+        notificationPanel.add(smsNotifications);
+        panel.add(notificationPanel, gbc);
+
+        row++;
+        gbc.gridx = 0; gbc.gridy = row;
+        panel.add(createStyledLabel("🔒 Privacy Settings:", labelFont, labelColor), gbc);
         gbc.gridx = 1;
         String[] privacyOptions = {"Public", "Friends Only", "Private"};
-        JComboBox<String> privacyComboBox = new JComboBox<>(privacyOptions);
+        JComboBox<String> privacyComboBox = createStyledComboBox(privacyOptions);
         panel.add(privacyComboBox, gbc);
 
+        row++;
+        gbc.gridx = 0; gbc.gridy = row;
+        panel.add(createStyledLabel("🎨 Theme:", labelFont, labelColor), gbc);
+        gbc.gridx = 1;
+        String[] themes = {"Light", "Dark", "System Default"};
+        JComboBox<String> themeComboBox = createStyledComboBox(themes);
+        panel.add(themeComboBox, gbc);
+
         return panel;
+    }
+
+    private JPanel createButtonPanel() {
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 10));
+        buttonPanel.setOpaque(false);
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0));
+
+        JButton changeAvatarButton = createModernButton("🖼️ Change Avatar", new Color(70, 130, 180));
+        changeAvatarButton.addActionListener(e -> changeAvatar());
+
+        JButton cancelButton = createModernButton("❌ Cancel", new Color(108, 117, 125));
+        cancelButton.addActionListener(e -> dispose());
+
+        JButton saveButton = createModernButton("💾 Save Profile", new Color(40, 167, 69));
+        saveButton.addActionListener(e -> saveProfile());
+
+        buttonPanel.add(changeAvatarButton);
+        buttonPanel.add(cancelButton);
+        buttonPanel.add(saveButton);
+
+        return buttonPanel;
+    }
+
+    private JLabel createStyledLabel(String text, Font font, Color color) {
+        JLabel label = new JLabel(text);
+        label.setFont(font);
+        label.setForeground(color);
+        return label;
+    }
+
+    private JTextField createStyledTextField() {
+        JTextField field = new JTextField(20) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2d = (Graphics2D) g.create();
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                // Background
+                g2d.setColor(Color.WHITE);
+                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
+
+                // Border
+                if (hasFocus()) {
+                    g2d.setColor(new Color(52, 152, 219));
+                } else {
+                    g2d.setColor(new Color(200, 200, 200));
+                }
+                g2d.setStroke(new BasicStroke(2));
+                g2d.drawRoundRect(1, 1, getWidth()-2, getHeight()-2, 10, 10);
+
+                super.paintComponent(g);
+                g2d.dispose();
+            }
+        };
+        field.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        field.setBorder(BorderFactory.createEmptyBorder(8, 12, 8, 12));
+        field.setOpaque(false);
+        return field;
+    }
+
+    private JComboBox<String> createStyledComboBox(String[] items) {
+        JComboBox<String> combo = new JComboBox<String>(items) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2d = (Graphics2D) g.create();
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                // Background
+                g2d.setColor(Color.WHITE);
+                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
+
+                // Border
+                if (hasFocus()) {
+                    g2d.setColor(new Color(52, 152, 219));
+                } else {
+                    g2d.setColor(new Color(200, 200, 200));
+                }
+                g2d.setStroke(new BasicStroke(2));
+                g2d.drawRoundRect(1, 1, getWidth()-2, getHeight()-2, 10, 10);
+
+                super.paintComponent(g);
+                g2d.dispose();
+            }
+        };
+        combo.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        combo.setBackground(Color.WHITE);
+        combo.setBorder(BorderFactory.createEmptyBorder(8, 12, 8, 12));
+        combo.setOpaque(false);
+        return combo;
+    }
+
+    private JCheckBox createStyledCheckBox(String text, boolean selected) {
+        JCheckBox checkBox = new JCheckBox(text);
+        checkBox.setSelected(selected);
+        checkBox.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        checkBox.setBackground(new Color(255, 255, 255, 0));
+        checkBox.setFocusPainted(false);
+        checkBox.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        return checkBox;
+    }
+
+    private JButton createModernButton(String text, Color baseColor) {
+        JButton button = new JButton(text) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2d = (Graphics2D) g.create();
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                if (getModel().isPressed()) {
+                    g2d.setColor(baseColor.darker().darker());
+                } else if (getModel().isRollover()) {
+                    g2d.setColor(baseColor.brighter());
+                } else {
+                    g2d.setColor(baseColor);
+                }
+
+                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
+
+                // Text
+                g2d.setColor(Color.WHITE);
+                g2d.setFont(getFont());
+                FontMetrics fm = g2d.getFontMetrics();
+                int x = (getWidth() - fm.stringWidth(getText())) / 2;
+                int y = (getHeight() - fm.getHeight()) / 2 + fm.getAscent();
+                g2d.drawString(getText(), x, y);
+
+                g2d.dispose();
+            }
+        };
+
+        button.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        button.setForeground(Color.WHITE);
+        button.setBorder(BorderFactory.createEmptyBorder(12, 25, 12, 25));
+        button.setContentAreaFilled(false);
+        button.setFocusPainted(false);
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        button.setPreferredSize(new Dimension(150, 45));
+
+        return button;
     }
 
     private void loadUserData() {
@@ -253,6 +569,11 @@ public class ProfilePage extends JDialog {
         facultyComboBox.setSelectedItem("Informatics & Design");
         courseField.setText("Applications Development");
         bioArea.setText("Computer Science student passionate about software development and AI.");
+
+        // Update avatar
+        if (avatarLabel != null) {
+            avatarLabel.repaint();
+        }
     }
 
     private void saveProfile() {
@@ -261,28 +582,28 @@ public class ProfilePage extends JDialog {
         String ageStr = ageField.getText().trim();
         String email = emailField.getText().trim();
         String phone = phoneField.getText().trim();
-        String faculty = (String) facultyComboBox.getSelectedItem(); // Now works correctly
+        String faculty = (String) facultyComboBox.getSelectedItem();
         String course = courseField.getText().trim();
 
         // Validation
         if (name.isEmpty() || surname.isEmpty() || ageStr.isEmpty() || email.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please fill in all required fields", "Error", JOptionPane.ERROR_MESSAGE);
+            showErrorDialog("Please fill in all required fields");
             return;
         }
 
         try {
             int age = Integer.parseInt(ageStr);
             if (age < 16 || age > 100) {
-                JOptionPane.showMessageDialog(this, "Please enter a valid age (16-100)", "Error", JOptionPane.ERROR_MESSAGE);
+                showErrorDialog("Please enter a valid age (16-100)");
                 return;
             }
         } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Age must be a number", "Error", JOptionPane.ERROR_MESSAGE);
+            showErrorDialog("Age must be a number");
             return;
         }
 
         if (!email.contains("@") || !email.contains(".")) {
-            JOptionPane.showMessageDialog(this, "Please enter a valid email address", "Error", JOptionPane.ERROR_MESSAGE);
+            showErrorDialog("Please enter a valid email address");
             return;
         }
 
@@ -293,38 +614,77 @@ public class ProfilePage extends JDialog {
         currentUser.setGender((String) genderComboBox.getSelectedItem());
         currentUser.setEmail(email);
 
-        // In a real app, you would save to database here
-
-        JOptionPane.showMessageDialog(this,
-                "Profile updated successfully!\n" +
-                        "Name: " + name + " " + surname + "\n" +
-                        "Faculty: " + faculty + "\n" +
-                        "Course: " + course,
-                "Success",
-                JOptionPane.INFORMATION_MESSAGE);
+        // Show success message with modern styling
+        showSuccessDialog(
+                "Profile updated successfully!\n\n" +
+                        "👤 Name: " + name + " " + surname + "\n" +
+                        "🏛️ Faculty: " + faculty + "\n" +
+                        "📚 Course: " + course + "\n\n" +
+                        "Your changes have been saved."
+        );
 
         dispose();
     }
 
     private void changeAvatar() {
-        JOptionPane.showMessageDialog(this,
-                "Avatar change functionality would open a file chooser to select an image.\n" +
-                        "This feature is coming in the next update!",
-                "Feature Preview",
-                JOptionPane.INFORMATION_MESSAGE);
+        String[] options = {"🎨 Choose from Gallery", "📷 Take Photo", "🎭 Use Default"};
+        int choice = JOptionPane.showOptionDialog(this,
+                "<html><div style='text-align: center; width: 300px;'>" +
+                        "<b>Change Profile Picture</b><br><br>" +
+                        "Choose how you'd like to update your avatar:" +
+                        "</div></html>",
+                "Change Avatar",
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.INFORMATION_MESSAGE,
+                null,
+                options,
+                options[0]);
+
+        if (choice == 0) {
+            JOptionPane.showMessageDialog(this,
+                    "<html><div style='text-align: center;'>" +
+                            "🖼️ Avatar Gallery<br><br>" +
+                            "This would open your file browser to select an image." +
+                            "</div></html>",
+                    "Coming Soon",
+                    JOptionPane.INFORMATION_MESSAGE);
+        } else if (choice == 1) {
+            JOptionPane.showMessageDialog(this,
+                    "<html><div style='text-align: center;'>" +
+                            "📸 Camera Access<br><br>" +
+                            "This would access your camera to take a new profile picture." +
+                            "</div></html>",
+                    "Coming Soon",
+                    JOptionPane.INFORMATION_MESSAGE);
+        }
     }
 
-    private void styleButton(JButton button, Color color) {
-        button.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        button.setBackground(color);
-        button.setForeground(Color.WHITE);
-        button.setFocusPainted(false);
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        button.setBorder(BorderFactory.createEmptyBorder(8, 16, 8, 16));
+    private void showErrorDialog(String message) {
+        JOptionPane.showMessageDialog(this,
+                "<html><div style='text-align: center;'>" +
+                        "❌ " + message +
+                        "</div></html>",
+                "Error",
+                JOptionPane.ERROR_MESSAGE);
+    }
+
+    private void showSuccessDialog(String message) {
+        JOptionPane.showMessageDialog(this,
+                "<html><div style='text-align: center;'>" +
+                        "✅ " + message.replace("\n", "<br>") +
+                        "</div></html>",
+                "Success",
+                JOptionPane.INFORMATION_MESSAGE);
     }
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
+            try {
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
             JFrame frame = new JFrame();
             User testUser = new User("John", "Doe", "ST123456", 21, "Male", "john.doe@email.com");
             ProfilePage profile = new ProfilePage(frame, testUser);

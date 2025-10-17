@@ -48,8 +48,9 @@ public class Login extends JFrame {
         // ==== Logo/Header Section ====
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setOpaque(false);
+        headerPanel.setPreferredSize(new Dimension(100, 120)); // Increased height for logo
 
-        // Logo display - Using your actual logo file
+        // Logo display - Centered logo like in Register page
         JLabel logoLabel = new JLabel();
         if (logoIcon != null) {
             logoLabel.setIcon(logoIcon);
@@ -131,11 +132,18 @@ public class Login extends JFrame {
 
         // ==== Show Password Checkbox ====
         gbc.gridx = 1; gbc.gridy = 2;
-        showPasswordCheckBox = new JCheckBox("👁️ Show Password");
+        showPasswordCheckBox = new JCheckBox("👁️ Show Password") {
+            @Override
+            public void setRolloverEnabled(boolean b) {
+                super.setRolloverEnabled(false); // Disable rollover effect
+            }
+        };
         showPasswordCheckBox.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         showPasswordCheckBox.setBackground(new Color(255, 255, 255, 0));
         showPasswordCheckBox.setForeground(labelColor);
         showPasswordCheckBox.setFocusPainted(false);
+        showPasswordCheckBox.setRolloverEnabled(false); // Disable hover effect
+        showPasswordCheckBox.setCursor(new Cursor(Cursor.DEFAULT_CURSOR)); // Default cursor instead of hand
         showPasswordCheckBox.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -231,7 +239,7 @@ public class Login extends JFrame {
     private void loadLogo() {
         try {
             // Method 1: Load from project resources folder
-            logoIcon = new ImageIcon("resources/20251013_0428_Campus Access Logo_simple_compose_01k7dp8zxzftq9kghhg6typvaz.png");
+            logoIcon = new ImageIcon("resources/images/20251013_0428_Campus Access Logo_simple_compose_01k7dp8zxzftq9kghhg6typvaz.png");
 
             // If Method 1 fails, try Method 2: Load from absolute path
             if (logoIcon.getImageLoadStatus() != MediaTracker.COMPLETE) {
@@ -249,7 +257,7 @@ public class Login extends JFrame {
             // Resize logo if loaded successfully
             if (logoIcon.getImageLoadStatus() == MediaTracker.COMPLETE) {
                 Image image = logoIcon.getImage();
-                Image resizedImage = image.getScaledInstance(120, 120, Image.SCALE_SMOOTH);
+                Image resizedImage = image.getScaledInstance(80, 80, Image.SCALE_SMOOTH); // Same size as Register page
                 logoIcon = new ImageIcon(resizedImage);
                 System.out.println("✅ Logo loaded successfully!");
             } else {

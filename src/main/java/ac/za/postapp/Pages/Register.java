@@ -14,12 +14,8 @@ public class Register extends JFrame {
     private JTextField emailField;
     private JPasswordField passwordField;
     private JPasswordField confirmPasswordField;
-    private JComboBox<String> deviceTypeComboBox;
-    private JCheckBox avoidStairsCheckBox;
-    private JCheckBox preferRampsCheckBox;
-    private JTextField minWidthField;
     private JButton registerButton;
-    private JButton backButton;
+    private JButton loginButton;
     private ImageIcon logoIcon;
     private JPanel loadingPanel;
     private Timer loadingTimer;
@@ -32,7 +28,7 @@ public class Register extends JFrame {
 
         setTitle("Register - Campus Access Guide");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(600, 750);
+        setSize(500, 650); // Adjusted size for simpler form
         setLocationRelativeTo(null);
         setResizable(false);
 
@@ -57,21 +53,17 @@ public class Register extends JFrame {
         JPanel headerPanel = createHeaderPanel();
         mainPanel.add(headerPanel, BorderLayout.NORTH);
 
-        // ====== Form Panel with Tabs and Scroll Bars ======
-        JTabbedPane tabbedPane = new JTabbedPane();
-        tabbedPane.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        tabbedPane.setBackground(new Color(255, 255, 255, 200));
+        // ====== Personal Information Form ======
+        JPanel formPanel = createPersonalInfoPanel();
 
-        tabbedPane.addTab("👤 Personal Info", createScrollablePanel(createPersonalInfoPanel()));
-        tabbedPane.addTab("♿ Accessibility", createScrollablePanel(createAccessibilityPanel()));
+        // Wrap in scroll pane (just in case)
+        JScrollPane scrollPane = new JScrollPane(formPanel);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        scrollPane.getViewport().setBackground(new Color(255, 255, 255, 230));
 
-        // Make the entire form scrollable
-        JScrollPane mainScroll = new JScrollPane(tabbedPane);
-        mainScroll.setBorder(BorderFactory.createEmptyBorder());
-        mainScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        mainScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        mainScroll.getVerticalScrollBar().setUnitIncrement(16);
-        mainPanel.add(mainScroll, BorderLayout.CENTER);
+        mainPanel.add(scrollPane, BorderLayout.CENTER);
 
         // ====== Progress Bar ======
         progressBar = new JProgressBar(0, 100);
@@ -88,7 +80,7 @@ public class Register extends JFrame {
 
         // ====== Loading Panel ======
         loadingPanel = createLoadingPanel();
-        mainPanel.add(loadingPanel, BorderLayout.SOUTH);
+        loadingPanel.setVisible(false);
 
         add(mainPanel);
 
@@ -99,71 +91,94 @@ public class Register extends JFrame {
     }
 
     private JPanel createButtonPanel() {
-        JPanel buttonPanel = new JPanel(new GridBagLayout());
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
         buttonPanel.setOpaque(false);
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 15, 10, 15);
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
 
         // Register Button
-        registerButton = new JButton("🚀 Register");
-        registerButton.setFont(new Font("Segoe UI", Font.BOLD, 15));
-        registerButton.setBackground(new Color(46, 204, 113));
+        registerButton = new JButton("🚀 Register") {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2d = (Graphics2D) g.create();
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                if (getModel().isPressed()) {
+                    g2d.setColor(new Color(39, 174, 96));
+                } else if (getModel().isRollover()) {
+                    g2d.setColor(new Color(46, 204, 113).brighter());
+                } else {
+                    g2d.setColor(new Color(46, 204, 113));
+                }
+
+                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
+
+                // Text
+                g2d.setColor(Color.WHITE);
+                g2d.setFont(getFont());
+                FontMetrics fm = g2d.getFontMetrics();
+                int x = (getWidth() - fm.stringWidth(getText())) / 2;
+                int y = (getHeight() - fm.getHeight()) / 2 + fm.getAscent();
+                g2d.drawString(getText(), x, y);
+
+                g2d.dispose();
+            }
+        };
+        registerButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
         registerButton.setForeground(Color.WHITE);
-        registerButton.setFocusPainted(false);
         registerButton.setBorder(BorderFactory.createEmptyBorder(12, 25, 12, 25));
+        registerButton.setContentAreaFilled(false);
+        registerButton.setFocusPainted(false);
         registerButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
         registerButton.setToolTipText("Create your new account");
         registerButton.addActionListener(e -> animateRegistration());
-        registerButton.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                registerButton.setBackground(new Color(39, 174, 96));
-            }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                registerButton.setBackground(new Color(46, 204, 113));
-            }
-        });
 
-        // Back Button
-        backButton = new JButton("↩ Back to Login");
-        backButton.setFont(new Font("Segoe UI", Font.BOLD, 15));
-        backButton.setBackground(new Color(52, 152, 219));
-        backButton.setForeground(Color.WHITE);
-        backButton.setFocusPainted(false);
-        backButton.setBorder(BorderFactory.createEmptyBorder(12, 25, 12, 25));
-        backButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        backButton.setToolTipText("Return to login page");
-        backButton.addActionListener(e -> openLogin());
-        backButton.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                backButton.setBackground(new Color(41, 128, 185));
-            }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                backButton.setBackground(new Color(52, 152, 219));
-            }
-        });
+        // Login Button (to go to login page)
+        loginButton = new JButton("🔐 Login") {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2d = (Graphics2D) g.create();
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        gbc.gridx = 0; gbc.gridy = 0;
-        buttonPanel.add(registerButton, gbc);
-        gbc.gridx = 1;
-        buttonPanel.add(backButton, gbc);
+                if (getModel().isPressed()) {
+                    g2d.setColor(new Color(41, 128, 185));
+                } else if (getModel().isRollover()) {
+                    g2d.setColor(new Color(52, 152, 219).brighter());
+                } else {
+                    g2d.setColor(new Color(52, 152, 219));
+                }
+
+                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
+
+                // Text
+                g2d.setColor(Color.WHITE);
+                g2d.setFont(getFont());
+                FontMetrics fm = g2d.getFontMetrics();
+                int x = (getWidth() - fm.stringWidth(getText())) / 2;
+                int y = (getHeight() - fm.getHeight()) / 2 + fm.getAscent();
+                g2d.drawString(getText(), x, y);
+
+                g2d.dispose();
+            }
+        };
+        loginButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        loginButton.setForeground(Color.WHITE);
+        loginButton.setBorder(BorderFactory.createEmptyBorder(12, 25, 12, 25));
+        loginButton.setContentAreaFilled(false);
+        loginButton.setFocusPainted(false);
+        loginButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        loginButton.setToolTipText("Already have an account? Login here");
+        loginButton.addActionListener(e -> openLogin());
+
+        buttonPanel.add(registerButton);
+        buttonPanel.add(loginButton);
 
         return buttonPanel;
-    }
-
-    private JScrollPane createScrollablePanel(JPanel panel) {
-        JScrollPane scrollPane = new JScrollPane(panel);
-        scrollPane.setBorder(BorderFactory.createEmptyBorder());
-        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        scrollPane.getViewport().setOpaque(false);
-        scrollPane.setOpaque(false);
-        return scrollPane;
     }
 
     private JPanel createHeaderPanel() {
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setOpaque(false);
+        headerPanel.setPreferredSize(new Dimension(100, 100));
 
         JLabel logoLabel = new JLabel();
         if (logoIcon != null) {
@@ -186,7 +201,7 @@ public class Register extends JFrame {
         headerPanel.add(logoLabel, BorderLayout.NORTH);
         headerPanel.add(title, BorderLayout.CENTER);
         headerPanel.add(subtitle, BorderLayout.SOUTH);
-        headerPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 20, 0));
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 0));
 
         return headerPanel;
     }
@@ -203,10 +218,10 @@ public class Register extends JFrame {
             }
         };
         panel.setOpaque(false);
-        panel.setBorder(BorderFactory.createEmptyBorder(25, 25, 25, 25));
+        panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(8, 8, 8, 8);
+        gbc.insets = new Insets(12, 8, 12, 8);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0;
 
@@ -232,91 +247,31 @@ public class Register extends JFrame {
         genderComboBox = createStyledComboBox(genders);
         panel.add(genderComboBox, gbc);
 
+        // Spacer
+        gbc.gridx = 0; gbc.gridy = 5; gbc.gridwidth = 2;
+        panel.add(Box.createVerticalStrut(20), gbc);
+
         // Email
-        addStyledLabelAndField(panel, gbc, 5, "📧 Email:", emailField = createStyledTextField());
+        gbc.gridx = 0; gbc.gridy = 6; gbc.gridwidth = 1;
+        addStyledLabelAndField(panel, gbc, 6, "📧 Email:", emailField = createStyledTextField());
 
         // Password
-        gbc.gridx = 0; gbc.gridy = 6;
+        gbc.gridx = 0; gbc.gridy = 7;
         JLabel passwordLabel = createStyledLabel("🔒 Password:");
         panel.add(passwordLabel, gbc);
 
-        gbc.gridx = 1; gbc.gridy = 6;
+        gbc.gridx = 1; gbc.gridy = 7;
         passwordField = createStyledPasswordField();
         panel.add(passwordField, gbc);
 
         // Confirm Password
-        gbc.gridx = 0; gbc.gridy = 7;
+        gbc.gridx = 0; gbc.gridy = 8;
         JLabel confirmPasswordLabel = createStyledLabel("✅ Confirm Password:");
         panel.add(confirmPasswordLabel, gbc);
 
-        gbc.gridx = 1; gbc.gridy = 7;
+        gbc.gridx = 1; gbc.gridy = 8;
         confirmPasswordField = createStyledPasswordField();
         panel.add(confirmPasswordField, gbc);
-
-        return panel;
-    }
-
-    private JPanel createAccessibilityPanel() {
-        JPanel panel = new JPanel(new GridBagLayout()) {
-            @Override
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2d = (Graphics2D) g.create();
-                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2d.setColor(new Color(255, 255, 255, 230));
-                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 25, 25);
-                g2d.dispose();
-            }
-        };
-        panel.setOpaque(false);
-        panel.setBorder(BorderFactory.createEmptyBorder(25, 25, 25, 25));
-
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(8, 8, 8, 8);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.weightx = 1.0;
-
-        // Device Type
-        gbc.gridx = 0; gbc.gridy = 0;
-        JLabel deviceLabel = createStyledLabel("♿ Mobility Device:");
-        panel.add(deviceLabel, gbc);
-
-        gbc.gridx = 1; gbc.gridy = 0;
-        String[] devices = {"None", "Wheelchair", "Walker", "Crutches", "Cane", "Service Animal"};
-        deviceTypeComboBox = createStyledComboBox(devices);
-        panel.add(deviceTypeComboBox, gbc);
-
-        // Accessibility Preferences Header
-        gbc.gridx = 0; gbc.gridy = 1; gbc.gridwidth = 2;
-        JLabel prefLabel = new JLabel("🎯 Accessibility Preferences:");
-        prefLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        prefLabel.setForeground(new Color(52, 73, 94));
-        panel.add(prefLabel, gbc);
-
-        // Checkboxes
-        gbc.gridy = 2; gbc.gridwidth = 2;
-        avoidStairsCheckBox = createStyledCheckBox("🚫 Avoid Stairs (I need elevator access)");
-        panel.add(avoidStairsCheckBox, gbc);
-
-        gbc.gridy = 3; gbc.gridwidth = 2;
-        preferRampsCheckBox = createStyledCheckBox("🔄 Prefer Ramps (Instead of stairs when available)");
-        panel.add(preferRampsCheckBox, gbc);
-
-        // Minimum Path Width
-        gbc.gridy = 4; gbc.gridwidth = 1;
-        gbc.gridx = 0;
-        JLabel widthLabel = createStyledLabel("📏 Minimum Path Width (cm):");
-        panel.add(widthLabel, gbc);
-
-        gbc.gridx = 1;
-        minWidthField = createStyledTextField();
-        minWidthField.setText("90");
-        panel.add(minWidthField, gbc);
-
-        // Info text
-        gbc.gridx = 0; gbc.gridy = 5; gbc.gridwidth = 2;
-        JLabel infoLabel = new JLabel("<html><div style='text-align: center; color: #666; font-style: italic;'>These preferences help us find the most accessible routes for you.</div></html>");
-        infoLabel.setFont(new Font("Segoe UI", Font.ITALIC, 12));
-        panel.add(infoLabel, gbc);
 
         return panel;
     }
@@ -325,7 +280,6 @@ public class Register extends JFrame {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setOpaque(false);
         panel.setPreferredSize(new Dimension(100, 80));
-        panel.setVisible(false);
 
         JLabel loadingLabel = new JLabel("Creating your account...", SwingConstants.CENTER);
         loadingLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
@@ -355,25 +309,63 @@ public class Register extends JFrame {
     // ====== STYLED COMPONENT METHODS ======
 
     private JTextField createStyledTextField() {
-        JTextField field = new JTextField(20);
+        JTextField field = new JTextField(20) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2d = (Graphics2D) g.create();
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                // Background
+                g2d.setColor(Color.WHITE);
+                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
+
+                // Border
+                if (hasFocus()) {
+                    g2d.setColor(new Color(0, 123, 255));
+                } else {
+                    g2d.setColor(new Color(180, 180, 180));
+                }
+                g2d.setStroke(new BasicStroke(2));
+                g2d.drawRoundRect(1, 1, getWidth()-2, getHeight()-2, 15, 15);
+
+                super.paintComponent(g);
+                g2d.dispose();
+            }
+        };
         field.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        field.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(180, 180, 180)),
-                BorderFactory.createEmptyBorder(8, 12, 8, 12)
-        ));
-        field.setBackground(Color.WHITE);
+        field.setBorder(BorderFactory.createEmptyBorder(8, 12, 8, 12));
+        field.setOpaque(false);
         return field;
     }
 
     private JPasswordField createStyledPasswordField() {
-        JPasswordField field = new JPasswordField(20);
+        JPasswordField field = new JPasswordField(20) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2d = (Graphics2D) g.create();
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                // Background
+                g2d.setColor(Color.WHITE);
+                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
+
+                // Border
+                if (hasFocus()) {
+                    g2d.setColor(new Color(0, 123, 255));
+                } else {
+                    g2d.setColor(new Color(180, 180, 180));
+                }
+                g2d.setStroke(new BasicStroke(2));
+                g2d.drawRoundRect(1, 1, getWidth()-2, getHeight()-2, 15, 15);
+
+                super.paintComponent(g);
+                g2d.dispose();
+            }
+        };
         field.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        field.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(180, 180, 180)),
-                BorderFactory.createEmptyBorder(8, 12, 8, 12)
-        ));
+        field.setBorder(BorderFactory.createEmptyBorder(8, 12, 8, 12));
         field.setEchoChar('•');
-        field.setBackground(Color.WHITE);
+        field.setOpaque(false);
         return field;
     }
 
@@ -386,15 +378,6 @@ public class Register extends JFrame {
                 BorderFactory.createEmptyBorder(5, 8, 5, 8)
         ));
         return combo;
-    }
-
-    private JCheckBox createStyledCheckBox(String text) {
-        JCheckBox checkBox = new JCheckBox(text);
-        checkBox.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        checkBox.setBackground(new Color(255, 255, 255, 0));
-        checkBox.setForeground(new Color(52, 73, 94));
-        checkBox.setFocusPainted(false);
-        return checkBox;
     }
 
     private JLabel createStyledLabel(String text) {
@@ -418,7 +401,9 @@ public class Register extends JFrame {
         loadingPanel.setVisible(true);
         progressBar.setVisible(true);
         registerButton.setEnabled(false);
-        backButton.setEnabled(false);
+        loginButton.setEnabled(false);
+        revalidate();
+        repaint();
 
         Timer progressTimer = new Timer(50, new ActionListener() {
             int progress = 0;
@@ -449,7 +434,7 @@ public class Register extends JFrame {
                 loadingPanel.setVisible(false);
                 progressBar.setVisible(false);
                 registerButton.setEnabled(true);
-                backButton.setEnabled(true);
+                loginButton.setEnabled(true);
 
                 try {
                     Boolean success = get();
@@ -476,22 +461,16 @@ public class Register extends JFrame {
         String email = emailField.getText().trim();
         String password = new String(passwordField.getPassword()).trim();
         String confirmPassword = new String(confirmPasswordField.getPassword()).trim();
-        String deviceType = (String) deviceTypeComboBox.getSelectedItem();
-        boolean avoidStairs = avoidStairsCheckBox.isSelected();
-        boolean preferRamps = preferRampsCheckBox.isSelected();
-        String minWidthStr = minWidthField.getText().trim();
 
         // Validation
-        if (!validateInput(name, surname, studentNumber, ageStr, email, password, confirmPassword, minWidthStr)) {
+        if (!validateInput(name, surname, studentNumber, ageStr, email, password, confirmPassword)) {
             return false;
         }
 
         int age = Integer.parseInt(ageStr);
-        int minWidth = Integer.parseInt(minWidthStr);
 
-        // Create user and register - WITH DATABASE ERROR HANDLING
-        User user = new User(name, surname, studentNumber, age, gender, email,
-                deviceType, avoidStairs, preferRamps, minWidth);
+        // Create user with only personal info (no accessibility data)
+        User user = new User(name, surname, studentNumber, age, gender, email);
 
         try {
             // Try database registration
@@ -511,7 +490,7 @@ public class Register extends JFrame {
     }
 
     private boolean validateInput(String name, String surname, String studentNumber, String ageStr,
-                                  String email, String password, String confirmPassword, String minWidthStr) {
+                                  String email, String password, String confirmPassword) {
         // Basic validation
         if (name.isEmpty() || surname.isEmpty() || studentNumber.isEmpty() ||
                 ageStr.isEmpty() || email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
@@ -545,17 +524,6 @@ public class Register extends JFrame {
             return false;
         }
 
-        try {
-            int minWidth = Integer.parseInt(minWidthStr);
-            if (minWidth < 60 || minWidth > 200) {
-                showErrorDialog("Please enter a valid path width (60-200 cm).");
-                return false;
-            }
-        } catch (NumberFormatException e) {
-            showErrorDialog("Path width must be a number.");
-            return false;
-        }
-
         return true;
     }
 
@@ -577,18 +545,25 @@ public class Register extends JFrame {
                         "<h3 style='color: #27ae60;'>🎉 Registration Successful!</h3>" +
                         "<p><b>Welcome %s %s!</b></p>" +
                         "<p>Student Number: <b>%s</b></p>" +
-                        "<p>Accessibility Profile: <b>%s</b></p>" +
-                        "%s%s</div></html>",
+                        "</div></html>",
                 nameField.getText().trim(),
                 surnameField.getText().trim(),
-                studentNumberField.getText().trim(),
-                deviceTypeComboBox.getSelectedItem(),
-                avoidStairsCheckBox.isSelected() ? "🚫 Avoids Stairs<br>" : "",
-                preferRampsCheckBox.isSelected() ? "🔄 Prefers Ramps" : ""
+                studentNumberField.getText().trim()
         );
 
         JOptionPane.showMessageDialog(this, successMessage, "Success!", JOptionPane.INFORMATION_MESSAGE);
-        openLogin();
+
+        // Ask user if they want to login now
+        int option = JOptionPane.showConfirmDialog(this,
+                "<html><div style='text-align: center;'>" +
+                        "Would you like to login now?" +
+                        "</div></html>",
+                "Login Now?",
+                JOptionPane.YES_NO_OPTION);
+
+        if (option == JOptionPane.YES_OPTION) {
+            openLogin();
+        }
     }
 
     private void showErrorDialog(String message) {
