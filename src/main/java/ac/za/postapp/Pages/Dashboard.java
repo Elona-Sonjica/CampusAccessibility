@@ -1,662 +1,1128 @@
 package ac.za.postapp.Pages;
+
+// emeritusApex
+
 import javax.swing.*;
+import javax.swing.Timer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.geom.Area;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.RoundRectangle2D;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Random;
 
 public class Dashboard extends JFrame {
-    private JLabel nameLabel;
-    private JLabel surnameLabel;
-    private JLabel studentNumberLabel;
-    private JLabel ageLabel;
-    private JLabel genderLabel;
-    private JLabel emailLabel;
-    private JLabel deviceTypeLabel;
-    private JLabel accessibilityLabel;
-    private JButton logoutButton;
-
-    private JComboBox<String> facultyComboBox;
-    private JTextField courseField;
-    private JTextField destinationField;
-
-    // Enhanced buttons
-    private JButton mapButton;
-    private JButton eventsButton;
-    private JButton accessibleEventsButton;
-    private JButton profileButton;
-
-    // Store current user
     private User currentUser;
+    private ImageIcon logoIcon;
+
+    // Modern UI Components
+    private JLabel timeLabel;
+    private JLabel greetingLabel;
+    private Timer clockTimer;
+    private Timer animationTimer;
+    private Timer notificationTimer;
+
+    private JFrame mapFrame;
+    private JFrame settingsFrame;
+    private JFrame liveUpdatesFrame;
+    private NotificationsPage notificationsPage;
+
+    // Color scheme matching Register page
+    private final Color PRIMARY_COLOR = new Color(74, 107, 136);
+    private final Color SECONDARY_COLOR = new Color(33, 64, 98);
+    private final Color ACCENT_COLOR = new Color(46, 204, 113);
+    private final Color WARNING_COLOR = new Color(231, 76, 60);
+    private final Color DARK_BG = new Color(15, 32, 55);
+    private final Color LIGHT_BG = new Color(248, 249, 250);
+    private final Color GLASS_COLOR = new Color(255, 255, 255, 180);
+
+    // Animation variables
+    private AnimatedCard[] featureCards;
+    private int activeCardIndex = -1;
+    private float[] cardScales = {1.0f, 1.0f, 1.0f, 1.0f};
+    private Point[] cardPositions = new Point[4];
+
+    // Notification variables
+    private int notificationCount = 3;
+    private JLabel notificationBadge;
 
     public Dashboard() {
-        setTitle("Dashboard - CPUT Campus D6");
+        initializeDashboard();
+        setupModernUI();
+        startAnimations();
+        startNotificationTimer();
+    }
+
+    private void initializeDashboard() {
+        loadLogo();
+
+        setTitle("Campus Access Guide - Dashboard");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(900, 750);
+        setSize(1200, 800);
         setLocationRelativeTo(null);
         setResizable(true);
 
-        // ===== Main Layout =====
-        setLayout(new BorderLayout());
-
-        // ===== Top Menu Panel =====
-        JPanel topMenuPanel = createTopMenuPanel();
-        add(topMenuPanel, BorderLayout.NORTH);
-
-        // ===== Scrollable Main Content Panel =====
-        JPanel contentPanel = createContentPanel();
-        JScrollPane scrollPane = new JScrollPane(contentPanel);
-        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-        add(scrollPane, BorderLayout.CENTER);
-
-        // ===== Bottom Panel with Logout =====
-        JPanel bottomPanel = createBottomPanel();
-        add(bottomPanel, BorderLayout.SOUTH);
-    }
-
-    private JPanel createTopMenuPanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
-        panel.setBackground(new Color(52, 73, 94));
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
-
-        // Enhanced menu options - FIXED: All buttons now have proper actions
-        JButton scheduleButton = createMenuButton("Schedule");
-        scheduleButton.addActionListener(e -> openSchedule());
-        panel.add(scheduleButton);
-
-        JButton notificationsButton = createMenuButton("Notifications");
-        notificationsButton.addActionListener(e -> openNotifications());
-        panel.add(notificationsButton);
-
-        JButton settingsButton = createMenuButton("Settings");
-        settingsButton.addActionListener(e -> openSettings());
-        panel.add(settingsButton);
-
-        JButton facilitiesButton = createMenuButton("Facilities");
-        facilitiesButton.addActionListener(e -> openFacilities());
-        panel.add(facilitiesButton);
-
-        // Enhanced functionality buttons
-        mapButton = createMenuButton("Campus Map");
-        mapButton.addActionListener(e -> openInteractiveMap());
-        panel.add(mapButton);
-
-        eventsButton = createMenuButton("Manage Events");
-        eventsButton.addActionListener(e -> openEventManager());
-        panel.add(eventsButton);
-
-        accessibleEventsButton = createMenuButton("Find Events");
-        accessibleEventsButton.addActionListener(e -> openEventBrowser());
-        panel.add(accessibleEventsButton);
-
-        profileButton = createMenuButton("My Profile");
-        profileButton.addActionListener(e -> openProfile());
-        panel.add(profileButton);
-
-        return panel;
-    }
-
-    private JPanel createContentPanel() {
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        panel.setBackground(new Color(245, 247, 250));
-
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 10, 10, 10);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.weightx = 1.0;
-
-        Font labelFont = new Font("Segoe UI", Font.BOLD, 14);
-        Font valueFont = new Font("Segoe UI", Font.PLAIN, 14);
-
-        // ==== Title ====
-        JLabel title = new JLabel("📋 Student Dashboard - Enhanced", SwingConstants.CENTER);
-        title.setFont(new Font("Segoe UI", Font.BOLD, 24));
-        title.setForeground(new Color(52, 73, 94));
-        gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2;
-        panel.add(title, gbc);
-        gbc.gridwidth = 1;
-
-        // ==== User Info Section ====
-        JPanel userInfoPanel = createUserInfoPanel(labelFont, valueFont);
-        gbc.gridx = 0; gbc.gridy = 1; gbc.gridwidth = 2;
-        panel.add(userInfoPanel, gbc);
-        gbc.gridwidth = 1;
-
-        // ==== Accessibility Info Section ====
-        JPanel accessibilityPanel = createAccessibilityPanel(labelFont, valueFont);
-        gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 2;
-        panel.add(accessibilityPanel, gbc);
-        gbc.gridwidth = 1;
-
-        // ==== Navigation Section ====
-        JPanel navigationPanel = createNavigationPanel(labelFont);
-        gbc.gridx = 0; gbc.gridy = 3; gbc.gridwidth = 2;
-        panel.add(navigationPanel, gbc);
-
-        return panel;
-    }
-
-    private JPanel createUserInfoPanel(Font labelFont, Font valueFont) {
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createTitledBorder("Personal Information"),
-                BorderFactory.createEmptyBorder(10, 10, 10, 10)
-        ));
-        panel.setBackground(Color.WHITE);
-
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 10, 5, 10);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.weightx = 1.0;
-
-        int row = 0;
-
-        // Name
-        gbc.gridx = 0; gbc.gridy = row;
-        panel.add(createStyledLabel("Name:", labelFont), gbc);
-        gbc.gridx = 1;
-        nameLabel = createValueLabel(valueFont);
-        panel.add(nameLabel, gbc);
-
-        row++;
-        gbc.gridx = 0; gbc.gridy = row;
-        panel.add(createStyledLabel("Surname:", labelFont), gbc);
-        gbc.gridx = 1;
-        surnameLabel = createValueLabel(valueFont);
-        panel.add(surnameLabel, gbc);
-
-        row++;
-        gbc.gridx = 0; gbc.gridy = row;
-        panel.add(createStyledLabel("Student Number:", labelFont), gbc);
-        gbc.gridx = 1;
-        studentNumberLabel = createValueLabel(valueFont);
-        panel.add(studentNumberLabel, gbc);
-
-        row++;
-        gbc.gridx = 0; gbc.gridy = row;
-        panel.add(createStyledLabel("Age:", labelFont), gbc);
-        gbc.gridx = 1;
-        ageLabel = createValueLabel(valueFont);
-        panel.add(ageLabel, gbc);
-
-        row++;
-        gbc.gridx = 0; gbc.gridy = row;
-        panel.add(createStyledLabel("Gender:", labelFont), gbc);
-        gbc.gridx = 1;
-        genderLabel = createValueLabel(valueFont);
-        panel.add(genderLabel, gbc);
-
-        row++;
-        gbc.gridx = 0; gbc.gridy = row;
-        panel.add(createStyledLabel("Email:", labelFont), gbc);
-        gbc.gridx = 1;
-        emailLabel = createValueLabel(valueFont);
-        panel.add(emailLabel, gbc);
-
-        return panel;
-    }
-
-    private JPanel createAccessibilityPanel(Font labelFont, Font valueFont) {
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createTitledBorder("Accessibility Preferences"),
-                BorderFactory.createEmptyBorder(10, 10, 10, 10)
-        ));
-        panel.setBackground(Color.WHITE);
-
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 10, 5, 10);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.weightx = 1.0;
-
-        int row = 0;
-
-        // Device Type
-        gbc.gridx = 0; gbc.gridy = row;
-        panel.add(createStyledLabel("Mobility Device:", labelFont), gbc);
-        gbc.gridx = 1;
-        deviceTypeLabel = createValueLabel(valueFont);
-        panel.add(deviceTypeLabel, gbc);
-
-        row++;
-        gbc.gridx = 0; gbc.gridy = row;
-        panel.add(createStyledLabel("Accessibility Needs:", labelFont), gbc);
-        gbc.gridx = 1;
-        accessibilityLabel = createValueLabel(valueFont);
-        panel.add(accessibilityLabel, gbc);
-
-        return panel;
-    }
-
-    private JPanel createNavigationPanel(Font labelFont) {
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createTitledBorder("Campus Navigation"),
-                BorderFactory.createEmptyBorder(10, 10, 10, 10)
-        ));
-        panel.setBackground(Color.WHITE);
-
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 10, 10, 10);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.weightx = 1.0;
-
-        int row = 0;
-
-        // Faculty Dropdown
-        gbc.gridx = 0; gbc.gridy = row;
-        panel.add(createStyledLabel("Faculty:", labelFont), gbc);
-        gbc.gridx = 1;
-        String[] faculties = {"Engineering", "Health Sciences", "Business", "Education", "Applied Sciences", "Informatics and Design"};
-        facultyComboBox = new JComboBox<>(faculties);
-        facultyComboBox.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        panel.add(facultyComboBox, gbc);
-
-        row++;
-        gbc.gridx = 0; gbc.gridy = row;
-        panel.add(createStyledLabel("Course:", labelFont), gbc);
-        gbc.gridx = 1;
-        courseField = new JTextField();
-        courseField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        courseField.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(180, 180, 180)),
-                BorderFactory.createEmptyBorder(5, 8, 5, 8)
-        ));
-        panel.add(courseField, gbc);
-
-        row++;
-        gbc.gridx = 0; gbc.gridy = row;
-        panel.add(createStyledLabel("Destination:", labelFont), gbc);
-        gbc.gridx = 1;
-        destinationField = new JTextField();
-        destinationField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        destinationField.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(180, 180, 180)),
-                BorderFactory.createEmptyBorder(5, 8, 5, 8)
-        ));
-        panel.add(destinationField, gbc);
-
-        // Quick Navigation Buttons - FIXED STYLING
-        row++;
-        gbc.gridx = 0; gbc.gridy = row; gbc.gridwidth = 2;
-        JPanel quickNavPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
-        quickNavPanel.setBackground(Color.WHITE);
-
-        String[] quickLocations = {"Entry/Exit", "Lab 1.19", "Lab 1.11", "Toilets", "Library", "Cafeteria"};
-        for (String location : quickLocations) {
-            JButton btn = new JButton(location);
-            btn.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-            btn.setBackground(new Color(70, 130, 180));
-            btn.setForeground(Color.WHITE);
-            btn.setFocusPainted(false);
-            btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-            btn.setBorder(BorderFactory.createEmptyBorder(8, 12, 8, 12));
-
-            // Add hover effect
-            btn.addMouseListener(new java.awt.event.MouseAdapter() {
-                public void mouseEntered(java.awt.event.MouseEvent evt) {
-                    btn.setBackground(new Color(30, 144, 255));
-                    btn.setForeground(Color.WHITE);
-                }
-                public void mouseExited(java.awt.event.MouseEvent evt) {
-                    btn.setBackground(new Color(70, 130, 180));
-                    btn.setForeground(Color.WHITE);
-                }
-            });
-
-            btn.addActionListener(e -> {
-                destinationField.setText(location);
-                openInteractiveMapWithDestination(location);
-            });
-            quickNavPanel.add(btn);
+        // Set application icon
+        if (logoIcon != null) {
+            setIconImage(logoIcon.getImage());
         }
-        panel.add(quickNavPanel, gbc);
+
+        // Modern layout
+        setLayout(new BorderLayout());
+        getContentPane().setBackground(DARK_BG);
+    }
+
+    private void setupModernUI() {
+        // Create main container with gradient matching Register page
+        JPanel mainContainer = new JPanel(new BorderLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                // Gradient matching Register page
+                GradientPaint gradient = new GradientPaint(
+                        0, 0, new Color(74, 107, 136),
+                        getWidth(), getHeight(), new Color(33, 64, 98)
+                );
+                g2d.setPaint(gradient);
+                g2d.fillRect(0, 0, getWidth(), getHeight());
+
+                // Add subtle particles for depth
+                g2d.setColor(new Color(255, 255, 255, 8));
+                Random rand = new Random();
+                for (int i = 0; i < 100; i++) {
+                    int x = rand.nextInt(getWidth());
+                    int y = rand.nextInt(getHeight());
+                    int size = rand.nextInt(3) + 1;
+                    g2d.fillOval(x, y, size, size);
+                }
+            }
+        };
+        mainContainer.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+
+        // Add components
+        mainContainer.add(createHeader(), BorderLayout.NORTH);
+        mainContainer.add(createMainContent(), BorderLayout.CENTER);
+        mainContainer.add(createBottomBar(), BorderLayout.SOUTH);
+
+        add(mainContainer);
+    }
+
+    private JPanel createHeader() {
+        JPanel header = new JPanel(new BorderLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                // Glass morphism effect matching Register
+                g2d.setColor(new Color(255, 255, 255, 25));
+                g2d.fillRect(0, 0, getWidth(), getHeight());
+
+                // Subtle border
+                g2d.setColor(new Color(255, 255, 255, 40));
+                g2d.setStroke(new BasicStroke(1));
+                g2d.drawLine(0, getHeight() - 1, getWidth(), getHeight() - 1);
+            }
+        };
+        header.setBorder(BorderFactory.createEmptyBorder(15, 30, 15, 30));
+        header.setOpaque(false);
+
+        // Left side - Logo and Title
+        JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
+        leftPanel.setOpaque(false);
+
+        JLabel logoLabel = createStaticLogo();
+        leftPanel.add(logoLabel);
+
+        JLabel titleLabel = new JLabel("CAMPUS ACCESS GUIDE");
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        titleLabel.setForeground(Color.WHITE);
+        titleLabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
+        leftPanel.add(titleLabel);
+
+        // Center - Time and Greeting
+        JPanel centerPanel = new JPanel(new GridLayout(2, 1, 0, 5));
+        centerPanel.setOpaque(false);
+
+        timeLabel = new JLabel("", SwingConstants.CENTER);
+        timeLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        timeLabel.setForeground(new Color(200, 220, 240));
+
+        greetingLabel = new JLabel("", SwingConstants.CENTER);
+        greetingLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        greetingLabel.setForeground(new Color(180, 200, 220));
+
+        centerPanel.add(timeLabel);
+        centerPanel.add(greetingLabel);
+
+        // Right side - Quick Actions with visible avatars
+        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        rightPanel.setOpaque(false);
+
+        JButton notificationBtn = createHeaderButton("🔔", "Notifications");
+        JButton settingsBtn = createHeaderButton("⚙️", "Settings");
+        JButton profileBtn = createHeaderButton("👤", "Profile");
+
+        // Add notification badge to notification button
+        notificationBadge = createNotificationBadge();
+        updateNotificationBadge();
+        JPanel notificationPanel = new JPanel(new BorderLayout());
+        notificationPanel.setOpaque(false);
+        notificationPanel.add(notificationBtn, BorderLayout.CENTER);
+        notificationPanel.add(notificationBadge, BorderLayout.NORTH);
+
+        notificationBtn.addActionListener(e -> openNotifications());
+        settingsBtn.addActionListener(e -> openSettings());
+        profileBtn.addActionListener(e -> openProfile());
+
+        rightPanel.add(notificationPanel);
+        rightPanel.add(settingsBtn);
+        rightPanel.add(profileBtn);
+
+        header.add(leftPanel, BorderLayout.WEST);
+        header.add(centerPanel, BorderLayout.CENTER);
+        header.add(rightPanel, BorderLayout.EAST);
+
+        return header;
+    }
+
+    private JLabel createNotificationBadge() {
+        JLabel badge = new JLabel("0") {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                // Draw red circle background
+                g2d.setColor(new Color(231, 76, 60));
+                g2d.fillOval(0, 0, getWidth(), getHeight());
+
+                // Draw white text
+                g2d.setColor(Color.WHITE);
+                g2d.setFont(new Font("Segoe UI", Font.BOLD, 10));
+                FontMetrics fm = g2d.getFontMetrics();
+                int x = (getWidth() - fm.stringWidth(getText())) / 2;
+                int y = (getHeight() - fm.getHeight()) / 2 + fm.getAscent();
+                g2d.drawString(getText(), x, y);
+            }
+        };
+        badge.setPreferredSize(new Dimension(18, 18));
+        badge.setForeground(Color.WHITE);
+        badge.setFont(new Font("Segoe UI", Font.BOLD, 10));
+        badge.setHorizontalAlignment(SwingConstants.CENTER);
+        badge.setVisible(false);
+        return badge;
+    }
+
+    private void updateNotificationBadge() {
+        if (notificationCount > 0) {
+            notificationBadge.setText(String.valueOf(notificationCount));
+            notificationBadge.setVisible(true);
+
+            // Add pulse animation to badge
+            Timer pulseTimer = new Timer(500, new ActionListener() {
+                boolean visible = true;
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    visible = !visible;
+                    notificationBadge.setVisible(visible);
+                }
+            });
+            pulseTimer.setRepeats(false);
+            pulseTimer.start();
+        } else {
+            notificationBadge.setVisible(false);
+        }
+    }
+
+    private JButton createHeaderButton(String icon, String tooltip) {
+        JButton button = new JButton() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                if (getModel().isPressed()) {
+                    g2d.setColor(new Color(255, 255, 255, 80));
+                } else if (getModel().isRollover()) {
+                    g2d.setColor(new Color(255, 255, 255, 60));
+                } else {
+                    g2d.setColor(new Color(255, 255, 255, 40));
+                }
+
+                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
+
+                // Icon with better visibility - using proper font rendering
+                g2d.setColor(Color.WHITE);
+                g2d.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 20));
+                FontMetrics fm = g2d.getFontMetrics();
+                int x = (getWidth() - fm.stringWidth(icon)) / 2;
+                int y = (getHeight() - fm.getHeight()) / 2 + fm.getAscent();
+                g2d.drawString(icon, x, y);
+            }
+        };
+
+        button.setPreferredSize(new Dimension(50, 50));
+        button.setContentAreaFilled(false);
+        button.setBorder(BorderFactory.createEmptyBorder());
+        button.setFocusPainted(false);
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        button.setToolTipText(tooltip);
+
+        return button;
+    }
+
+    private JLabel createStaticLogo() {
+        JLabel logoLabel = new JLabel();
+        if (logoIcon != null) {
+            logoLabel.setIcon(logoIcon);
+        } else {
+            logoLabel.setText("🏛️");
+            logoLabel.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 32));
+            logoLabel.setForeground(Color.WHITE);
+        }
+        return logoLabel;
+    }
+
+    private JPanel createMainContent() {
+        JPanel content = new JPanel(new BorderLayout());
+        content.setOpaque(false);
+        content.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        // Left sidebar - User profile and navigation
+        content.add(createSidebar(), BorderLayout.WEST);
+
+        // Center - Dashboard cards with animation
+        content.add(createDashboardCards(), BorderLayout.CENTER);
+
+        return content;
+    }
+
+    private JPanel createSidebar() {
+        JPanel sidebar = new JPanel();
+        sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
+        sidebar.setOpaque(false);
+        sidebar.setPreferredSize(new Dimension(280, 0));
+        sidebar.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 20));
+
+        // User profile card with glass effect
+        sidebar.add(createUserProfileCard());
+        sidebar.add(Box.createRigidArea(new Dimension(0, 20)));
+
+        // Navigation shortcuts
+        sidebar.add(createNavigationShortcuts());
+
+        return sidebar;
+    }
+
+    private JPanel createUserProfileCard() {
+        JPanel card = new JPanel(new BorderLayout(10, 10)) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                // Glass morphism effect matching Register
+                g2d.setColor(new Color(255, 255, 255, 35));
+                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
+
+                // Border
+                g2d.setColor(new Color(255, 255, 255, 60));
+                g2d.setStroke(new BasicStroke(1.5f));
+                g2d.drawRoundRect(1, 1, getWidth()-3, getHeight()-3, 20, 20);
+            }
+        };
+        card.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        card.setOpaque(false);
+
+        // User avatar with raised hands emoji
+        JPanel avatarPanel = new JPanel(new BorderLayout());
+        avatarPanel.setOpaque(false);
+
+        JLabel avatar = new JLabel("🤲🏽", SwingConstants.CENTER);
+        avatar.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 60));
+        avatar.setForeground(new Color(52, 152, 219));
+        avatar.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 0));
+
+        avatarPanel.add(avatar, BorderLayout.CENTER);
+
+        JLabel nameLabel = new JLabel("Welcome Explorer!", SwingConstants.CENTER);
+        nameLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        nameLabel.setForeground(Color.WHITE);
+
+        JLabel studentIdLabel = new JLabel("Ready to navigate campus", SwingConstants.CENTER);
+        studentIdLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        studentIdLabel.setForeground(new Color(200, 220, 240));
+
+        JPanel infoPanel = new JPanel(new GridLayout(2, 1, 5, 5));
+        infoPanel.setOpaque(false);
+        infoPanel.add(nameLabel);
+        infoPanel.add(studentIdLabel);
+
+        // Status badge
+        JPanel badgePanel = createStatusBadge();
+
+        card.add(avatarPanel, BorderLayout.NORTH);
+        card.add(infoPanel, BorderLayout.CENTER);
+        card.add(badgePanel, BorderLayout.SOUTH);
+
+        return card;
+    }
+
+    private JPanel createStatusBadge() {
+        JPanel badge = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5)) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                g2d.setColor(new Color(46, 204, 113, 120));
+                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 12, 12);
+            }
+        };
+        badge.setOpaque(false);
+        badge.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
+
+        JLabel badgeText = new JLabel("🚀 System Active");
+        badgeText.setFont(new Font("Segoe UI Emoji", Font.BOLD, 11));
+        badgeText.setForeground(new Color(255, 255, 255));
+
+        badge.add(badgeText);
+
+        return badge;
+    }
+
+    private JPanel createNavigationShortcuts() {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setOpaque(false);
+
+        String[] shortcuts = {
+                "🗺️ Interactive Map",
+                "📊 Live Updates",
+                "🔔 Notifications",
+                "⚙️ Settings",
+                "🏛️ Facilities",
+                "👤 My Profile"
+        };
+
+        for (String shortcut : shortcuts) {
+            JButton btn = createModernNavButton(shortcut);
+            btn.addActionListener(e -> handleNavigation(shortcut));
+            panel.add(btn);
+            panel.add(Box.createRigidArea(new Dimension(0, 8)));
+        }
 
         return panel;
     }
 
-    private JPanel createBottomPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(new Color(245, 247, 250));
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 20, 20, 20));
+    private JPanel createDashboardCards() {
+        JPanel cardsPanel = new JPanel(new GridBagLayout());
+        cardsPanel.setOpaque(false);
 
-        // Home button - FIXED STYLING
-        JButton homeButton = new JButton("Home");
-        homeButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        homeButton.setBackground(new Color(52, 73, 94));
-        homeButton.setForeground(Color.WHITE);
-        homeButton.setFocusPainted(false);
-        homeButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        homeButton.setBorder(BorderFactory.createEmptyBorder(8, 20, 8, 20));
+        // Initialize animated cards
+        featureCards = new AnimatedCard[4];
+        String[] titles = {"Quick Navigation", "Live Updates", "Campus Explorer", "Notifications"};
+        String[] emojis = {"🧭", "📊", "🏛️", "🔔"};
+        String[] descriptions = {
+                "Get instant directions to any campus location with accessibility-optimized routes",
+                "Monitor real-time status of elevators, stairs, and campus facilities",
+                "Discover buildings, facilities, and accessible amenities across campus",
+                "Real-time alerts about elevator outages and accessibility updates"
+        };
+        Color[] colors = {
+                new Color(52, 152, 219),    // Blue for Navigation
+                new Color(46, 204, 113),    // Green for Live Updates
+                new Color(155, 89, 182),    // Purple for Campus Explorer
+                new Color(41, 128, 185)     // Professional Blue for Notifications
+        };
 
-        // Add hover effect to home button
-        homeButton.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                homeButton.setBackground(new Color(30, 50, 70));
-                homeButton.setForeground(Color.WHITE);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(15, 15, 15, 15);
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.weightx = 1.0;
+        gbc.weighty = 1.0;
+
+        for (int i = 0; i < 4; i++) {
+            gbc.gridx = i % 2;
+            gbc.gridy = i / 2;
+
+            featureCards[i] = new AnimatedCard(emojis[i], titles[i], descriptions[i], colors[i], "Explore →", i);
+            cardsPanel.add(featureCards[i], gbc);
+            cardPositions[i] = new Point(0, 0);
+        }
+
+        return cardsPanel;
+    }
+
+    // Animated Card Class with 3D tile effect
+    class AnimatedCard extends JPanel {
+        private String emoji;
+        private String title;
+        private String description;
+        private Color color;
+        private String buttonText;
+        private int cardIndex;
+
+        private float scale = 1.0f;
+        private boolean isHovered = false;
+        private boolean isPressed = false;
+        private int shadowOffset = 0;
+        private float elevation = 0.0f;
+
+        public AnimatedCard(String emoji, String title, String description, Color color, String buttonText, int index) {
+            this.emoji = emoji;
+            this.title = title;
+            this.description = description;
+            this.color = color;
+            this.buttonText = buttonText;
+            this.cardIndex = index;
+
+            setOpaque(false);
+            setPreferredSize(new Dimension(300, 250));
+            setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+            setupAnimations();
+            addMouseListener(new CardMouseAdapter());
+        }
+
+        private void setupAnimations() {
+            addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseEntered(MouseEvent e) {
+                    isHovered = true;
+                    if (activeCardIndex != cardIndex) {
+                        animateCard(cardIndex, 1.05f);
+                    }
+                }
+
+                @Override
+                public void mouseExited(MouseEvent e) {
+                    isHovered = false;
+                    if (activeCardIndex != cardIndex) {
+                        animateCard(cardIndex, 1.0f);
+                    }
+                }
+
+                @Override
+                public void mousePressed(MouseEvent e) {
+                    isPressed = true;
+                    animateCardPress(cardIndex, true);
+                    repaint();
+                }
+
+                @Override
+                public void mouseReleased(MouseEvent e) {
+                    isPressed = false;
+                    animateCardPress(cardIndex, false);
+                    handleCardClick();
+                    repaint();
+                }
+            });
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2d = (Graphics2D) g;
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+
+            int width = getWidth();
+            int height = getHeight();
+
+            // Calculate scaled dimensions
+            int scaledWidth = (int)(width * scale);
+            int scaledHeight = (int)(height * scale);
+            int xOffset = (width - scaledWidth) / 2;
+            int yOffset = (height - scaledHeight) / 2 - (int)(elevation * 10);
+
+            // Draw shadow
+            if (shadowOffset > 0) {
+                g2d.setColor(new Color(0, 0, 0, 80 - shadowOffset * 2));
+                g2d.fillRoundRect(xOffset + shadowOffset, yOffset + shadowOffset,
+                        scaledWidth, scaledHeight, 25, 25);
             }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                homeButton.setBackground(new Color(52, 73, 94));
-                homeButton.setForeground(Color.WHITE);
+
+            // Draw card background with gradient
+            GradientPaint gradient = new GradientPaint(
+                    0, yOffset, color.brighter(),
+                    0, yOffset + scaledHeight, color.darker()
+            );
+            g2d.setPaint(gradient);
+            g2d.fillRoundRect(xOffset, yOffset, scaledWidth, scaledHeight, 25, 25);
+
+            // Draw border
+            g2d.setColor(new Color(255, 255, 255, 80));
+            g2d.setStroke(new BasicStroke(2f));
+            g2d.drawRoundRect(xOffset, yOffset, scaledWidth, scaledHeight, 25, 25);
+
+            // Draw content
+            drawCardContent(g2d, xOffset, yOffset, scaledWidth, scaledHeight);
+        }
+
+        private void drawCardContent(Graphics2D g2d, int x, int y, int width, int height) {
+            int padding = 20;
+
+            // Emoji - Larger and more visible
+            g2d.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 42));
+            FontMetrics emojiMetrics = g2d.getFontMetrics();
+            int emojiWidth = emojiMetrics.stringWidth(emoji);
+            g2d.drawString(emoji, x + (width - emojiWidth) / 2, y + padding + 40);
+
+            // Title
+            g2d.setFont(new Font("Segoe UI", Font.BOLD, 18));
+            g2d.setColor(Color.WHITE);
+            FontMetrics titleMetrics = g2d.getFontMetrics();
+            int titleWidth = titleMetrics.stringWidth(title);
+            g2d.drawString(title, x + (width - titleWidth) / 2, y + padding + 80);
+
+            // Description
+            g2d.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+            g2d.setColor(new Color(255, 255, 255, 220));
+            drawWrappedText(g2d, description, x + padding, y + padding + 100, width - 2 * padding, 60);
+
+            // Button
+            drawCardButton(g2d, x, y, width, height);
+        }
+
+        private void drawWrappedText(Graphics2D g2d, String text, int x, int y, int maxWidth, int maxHeight) {
+            String[] words = text.split(" ");
+            StringBuilder line = new StringBuilder();
+            int lineHeight = g2d.getFontMetrics().getHeight();
+            int currentY = y;
+
+            for (String word : words) {
+                String testLine = line + (line.length() == 0 ? "" : " ") + word;
+                int testWidth = g2d.getFontMetrics().stringWidth(testLine);
+
+                if (testWidth > maxWidth) {
+                    if (line.length() > 0) {
+                        g2d.drawString(line.toString(), x, currentY);
+                        currentY += lineHeight;
+                        if (currentY > y + maxHeight) break;
+                    }
+                    line = new StringBuilder(word);
+                } else {
+                    line.append(line.length() == 0 ? "" : " ").append(word);
+                }
+            }
+
+            if (line.length() > 0 && currentY <= y + maxHeight) {
+                g2d.drawString(line.toString(), x, currentY);
+            }
+        }
+
+        private void drawCardButton(Graphics2D g2d, int x, int y, int width, int height) {
+            int buttonWidth = 120;
+            int buttonHeight = 35;
+            int buttonX = x + (width - buttonWidth) / 2;
+            int buttonY = y + height - 50;
+
+            // Button background
+            Color btnColor = isPressed ? color.darker().darker() :
+                    isHovered ? color.brighter() : color;
+            g2d.setColor(btnColor);
+            g2d.fillRoundRect(buttonX, buttonY, buttonWidth, buttonHeight, 15, 15);
+
+            // Button text
+            g2d.setColor(Color.WHITE);
+            g2d.setFont(new Font("Segoe UI", Font.BOLD, 12));
+            FontMetrics btnMetrics = g2d.getFontMetrics();
+            int textWidth = btnMetrics.stringWidth(buttonText);
+            int textX = buttonX + (buttonWidth - textWidth) / 2;
+            int textY = buttonY + (buttonHeight - btnMetrics.getHeight()) / 2 + btnMetrics.getAscent();
+            g2d.drawString(buttonText, textX, textY);
+        }
+
+        private void handleCardClick() {
+            switch (title) {
+                case "Quick Navigation":
+                    openInteractiveMap();
+                    break;
+                case "Live Updates":
+                    openLiveUpdates();
+                    break;
+                case "Campus Explorer":
+                    openFacilities();
+                    break;
+                case "Notifications":
+                    openNotifications();
+                    break;
+            }
+
+            // Animate card press effect
+            if (activeCardIndex != cardIndex) {
+                setActiveCard(cardIndex);
+            }
+        }
+    }
+
+    private class CardMouseAdapter extends MouseAdapter {
+        @Override
+        public void mouseClicked(MouseEvent e) {
+            AnimatedCard card = (AnimatedCard) e.getSource();
+            card.handleCardClick();
+        }
+    }
+
+    private void setActiveCard(int index) {
+        int previousActive = activeCardIndex;
+        activeCardIndex = index;
+
+        // Reset all cards to normal scale
+        for (int i = 0; i < 4; i++) {
+            if (i != index) {
+                animateCard(i, 1.0f);
+            }
+        }
+
+        // Bring active card forward
+        if (index != -1) {
+            animateCard(index, 1.1f);
+        }
+    }
+
+    private void animateCard(int cardIndex, float targetScale) {
+        Timer animTimer = new Timer(10, new ActionListener() {
+            float currentScale = cardScales[cardIndex];
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                float diff = targetScale - currentScale;
+                if (Math.abs(diff) < 0.01f) {
+                    currentScale = targetScale;
+                    ((Timer)e.getSource()).stop();
+                } else {
+                    currentScale += diff * 0.3f;
+                }
+
+                cardScales[cardIndex] = currentScale;
+                if (featureCards[cardIndex] != null) {
+                    featureCards[cardIndex].scale = currentScale;
+                    featureCards[cardIndex].repaint();
+                }
             }
         });
+        animTimer.start();
+    }
 
-        homeButton.addActionListener(e -> JOptionPane.showMessageDialog(this, "Already on home page!"));
+    private void animateCardPress(int cardIndex, boolean pressed) {
+        featureCards[cardIndex].shadowOffset = pressed ? 2 : 0;
+        featureCards[cardIndex].elevation = pressed ? -0.1f : 0.0f;
+        featureCards[cardIndex].isPressed = pressed;
+        featureCards[cardIndex].repaint();
+    }
 
-        // Logout button - FIXED STYLING
-        logoutButton = new JButton("Logout");
-        logoutButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        logoutButton.setBackground(new Color(220, 53, 69));
-        logoutButton.setForeground(Color.WHITE);
-        logoutButton.setFocusPainted(false);
-        logoutButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        logoutButton.setBorder(BorderFactory.createEmptyBorder(8, 20, 8, 20));
-
-        // Add hover effect to logout button
-        logoutButton.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                logoutButton.setBackground(new Color(200, 35, 51));
-                logoutButton.setForeground(Color.WHITE);
+    private JPanel createBottomBar() {
+        JPanel bottomBar = new JPanel(new BorderLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setColor(new Color(255, 255, 255, 15));
+                g2d.fillRect(0, 0, getWidth(), getHeight());
             }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                logoutButton.setBackground(new Color(220, 53, 69));
-                logoutButton.setForeground(Color.WHITE);
-            }
-        });
+        };
+        bottomBar.setBorder(BorderFactory.createEmptyBorder(12, 30, 12, 30));
+        bottomBar.setOpaque(false);
 
-        logoutButton.addActionListener(e -> logout());
+        JLabel statusLabel = new JLabel("🟢 System Online • ♿ Accessibility Active • 📍 Location Services Enabled");
+        statusLabel.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 12));
+        statusLabel.setForeground(new Color(200, 220, 240));
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 0));
-        buttonPanel.setBackground(new Color(245, 247, 250));
-        buttonPanel.add(homeButton);
-        buttonPanel.add(logoutButton);
+        buttonPanel.setOpaque(false);
 
-        panel.add(buttonPanel, BorderLayout.EAST);
+        JButton helpBtn = createTextButton("Help");
+        JButton feedbackBtn = createTextButton("Feedback");
+        JButton logoutBtn = createTextButton("Logout");
 
-        return panel;
+        logoutBtn.addActionListener(e -> logout());
+
+        buttonPanel.add(helpBtn);
+        buttonPanel.add(feedbackBtn);
+        buttonPanel.add(logoutBtn);
+
+        bottomBar.add(statusLabel, BorderLayout.WEST);
+        bottomBar.add(buttonPanel, BorderLayout.EAST);
+
+        return bottomBar;
     }
 
-    private JButton createMenuButton(String text) {
-        JButton btn = new JButton(text);
-        btn.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        btn.setBackground(new Color(70, 130, 180));
-        btn.setForeground(Color.WHITE);
-        btn.setFocusPainted(false);
-        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btn.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
+    private JButton createModernNavButton(String text) {
+        JButton button = new JButton(text) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        // Add hover effect
-        btn.addMouseListener(new java.awt.event.MouseAdapter() {
+                if (getModel().isPressed()) {
+                    g2d.setColor(new Color(255, 255, 255, 60));
+                } else if (getModel().isRollover()) {
+                    g2d.setColor(new Color(255, 255, 255, 40));
+                } else {
+                    g2d.setColor(new Color(255, 255, 255, 20));
+                }
+
+                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 12, 12);
+
+                // Text
+                g2d.setColor(Color.WHITE);
+                g2d.setFont(new Font("Segoe UI Emoji", Font.BOLD, 14));
+                FontMetrics fm = g2d.getFontMetrics();
+                int x = 20; // Left aligned
+                int y = (getHeight() - fm.getHeight()) / 2 + fm.getAscent();
+                g2d.drawString(getText(), x, y);
+            }
+        };
+
+        button.setPreferredSize(new Dimension(250, 45));
+        button.setMaximumSize(new Dimension(250, 45));
+        button.setContentAreaFilled(false);
+        button.setBorder(BorderFactory.createEmptyBorder());
+        button.setFocusPainted(false);
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        button.setHorizontalAlignment(SwingConstants.LEFT);
+
+        return button;
+    }
+
+    private JButton createTextButton(String text) {
+        JButton button = new JButton(text);
+        button.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        button.setForeground(new Color(200, 220, 240));
+        button.setBackground(new Color(255, 255, 255, 0));
+        button.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
+        button.setFocusPainted(false);
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        button.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent evt) {
-                btn.setBackground(new Color(30, 144, 255));
-                btn.setForeground(Color.WHITE);
+                button.setForeground(Color.WHITE);
+                button.setBackground(new Color(255, 255, 255, 30));
             }
             public void mouseExited(java.awt.event.MouseEvent evt) {
-                btn.setBackground(new Color(70, 130, 180));
-                btn.setForeground(Color.WHITE);
+                button.setForeground(new Color(200, 220, 240));
+                button.setBackground(new Color(255, 255, 255, 0));
             }
         });
 
-        return btn;
+        return button;
     }
 
-    private JLabel createStyledLabel(String text, Font font) {
-        JLabel label = new JLabel(text);
-        label.setFont(font);
-        label.setForeground(new Color(52, 73, 94));
-        return label;
+    // ===== ANIMATION AND DYNAMIC UPDATES =====
+
+    private void startAnimations() {
+        // Real-time clock
+        clockTimer = new Timer(1000, e -> updateTimeAndGreeting());
+        clockTimer.start();
+        updateTimeAndGreeting();
+
+        // Subtle background animation
+        animationTimer = new Timer(50, e -> {
+            repaint();
+        });
+        animationTimer.start();
     }
 
-    private JLabel createValueLabel(Font font) {
-        JLabel label = new JLabel("N/A");
-        label.setFont(font);
-        label.setForeground(new Color(33, 37, 41));
-        label.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(220, 220, 220)),
-                BorderFactory.createEmptyBorder(5, 10, 5, 10)
-        ));
-        return label;
-    }
-
-    // ===== INTEGRATED PAGES METHODS - FIXED =====
-
-    private void openSchedule() {
-        // Create and show SchedulePage if you have it, otherwise show message
-        try {
-            // If you have a SchedulePage class:
-            // SchedulePage schedule = new SchedulePage(this);
-            // schedule.setVisible(true);
-            JOptionPane.showMessageDialog(this,
-                    "Schedule feature coming soon!\n\n" +
-                            "This will display your class timetable and academic schedule.",
-                    "Schedule",
-                    JOptionPane.INFORMATION_MESSAGE);
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Schedule feature is under development", "Coming Soon", JOptionPane.INFORMATION_MESSAGE);
-        }
-    }
-
-    private void openNotifications() {
-        try {
-            // If you have a NotificationsPage class:
-            // NotificationsPage notifications = new NotificationsPage(this);
-            // notifications.setVisible(true);
-            JOptionPane.showMessageDialog(this,
-                    "Notifications Center\n\n" +
-                            "• New assignment in AppDev\n" +
-                            "• Class cancelled: Project Management\n" +
-                            "• Campus event tomorrow",
-                    "Notifications",
-                    JOptionPane.INFORMATION_MESSAGE);
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Notifications feature is under development", "Coming Soon", JOptionPane.INFORMATION_MESSAGE);
-        }
-    }
-
-    private void openSettings() {
-        try {
-            // If you have a SettingsPage class:
-            // SettingsPage settings = new SettingsPage(this);
-            // settings.setVisible(true);
-            JOptionPane.showMessageDialog(this,
-                    "Application Settings\n\n" +
-                            "• Theme: Light\n" +
-                            "• Notifications: Enabled\n" +
-                            "• Accessibility: Custom\n" +
-                            "• Language: English",
-                    "Settings",
-                    JOptionPane.INFORMATION_MESSAGE);
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Settings feature is under development", "Coming Soon", JOptionPane.INFORMATION_MESSAGE);
-        }
-    }
-
-    private void openFacilities() {
-        try {
-            // If you have a FacultyPage class:
-            // FacultyPage facilities = new FacultyPage();
-            // facilities.setVisible(true);
-            JOptionPane.showMessageDialog(this,
-                    "Campus Facilities\n\n" +
-                            "🏛️  Engineering Building\n" +
-                            "🏥  Health Sciences\n" +
-                            "💼  Business School\n" +
-                            "🎓  Education Faculty\n" +
-                            "🔬  Applied Sciences\n" +
-                            "💻  Informatics & Design",
-                    "Campus Facilities",
-                    JOptionPane.INFORMATION_MESSAGE);
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Facilities feature is under development", "Coming Soon", JOptionPane.INFORMATION_MESSAGE);
-        }
-    }
-
-    private void openProfile() {
-        if (currentUser != null) {
-            // Open the actual ProfilePage if available
-            try {
-                // If you have a ProfilePage class:
-                // ProfilePage profile = new ProfilePage(this, currentUser);
-                // profile.setVisible(true);
-
-                // For now, show user info in dialog
-                String profileInfo = String.format(
-                        "👤 User Profile\n\n" +
-                                "Name: %s %s\n" +
-                                "Student Number: %s\n" +
-                                "Email: %s\n" +
-                                "Age: %d\n" +
-                                "Gender: %s\n\n" +
-                                "Accessibility:\n" +
-                                "• Device: %s\n" +
-                                "• Avoid Stairs: %s\n" +
-                                "• Prefer Ramps: %s\n" +
-                                "• Min Path Width: %d cm",
-                        currentUser.getName(), currentUser.getSurname(),
-                        currentUser.getStudentNumber(), currentUser.getEmail(),
-                        currentUser.getAge(), currentUser.getGender(),
-                        currentUser.getDeviceType(),
-                        currentUser.isAvoidStairs() ? "Yes" : "No",
-                        currentUser.isPreferRamps() ? "Yes" : "No",
-                        currentUser.getMinPathWidthCm()
-                );
-
-                JOptionPane.showMessageDialog(this, profileInfo, "My Profile", JOptionPane.INFORMATION_MESSAGE);
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(this, "Error opening profile: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+    private void startNotificationTimer() {
+        // Notification timer - shows notification every 1 minute
+        notificationTimer = new Timer(60000, new ActionListener() { // 60000 ms = 1 minute
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                showRandomNotification();
             }
-        } else {
-            JOptionPane.showMessageDialog(this, "User data not available", "Error", JOptionPane.ERROR_MESSAGE);
+        });
+        notificationTimer.start();
+    }
+
+    private void showRandomNotification() {
+        notificationCount++;
+        updateNotificationBadge();
+
+        // Random notification messages
+        String[] notifications = {
+                "🚨 Elevator maintenance scheduled for Engineering Building",
+                "📢 New accessible route available to Library",
+                "⚠️ Staircase B temporarily closed for repairs",
+                "🎓 Campus tour starting in 15 minutes",
+                "🔧 Accessibility features updated in Business Wing",
+                "📚 Study rooms available in Library",
+                "🍽️ Cafeteria special menu today",
+                "🚌 Shuttle service running on revised schedule"
+        };
+
+        Random rand = new Random();
+        String notification = notifications[rand.nextInt(notifications.length)];
+
+        // Show notification popup
+        JOptionPane.showMessageDialog(this,
+                "<html><div style='text-align: center; width: 300px;'>" +
+                        "<h3 style='color: #2e86c1;'>🔔 Campus Notification</h3>" +
+                        "<p>" + notification + "</p>" +
+                        "<small>Notification #" + notificationCount + "</small>" +
+                        "</div></html>",
+                "Campus Alert",
+                JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private void updateTimeAndGreeting() {
+        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
+        SimpleDateFormat dateFormat = new SimpleDateFormat("EEEE, MMMM d, yyyy");
+
+        String currentTime = timeFormat.format(new Date());
+        String currentDate = dateFormat.format(new Date());
+
+        timeLabel.setText(currentTime);
+
+        String greeting = getTimeBasedGreeting();
+        greetingLabel.setText(greeting + " • " + currentDate);
+    }
+
+    private String getTimeBasedGreeting() {
+        int hour = Integer.parseInt(new SimpleDateFormat("HH").format(new Date()));
+        if (hour < 12) return "Good Morning";
+        else if (hour < 17) return "Good Afternoon";
+        else return "Good Evening";
+    }
+
+    // ===== NAVIGATION HANDLERS =====
+
+    private void handleNavigation(String action) {
+        if (action.contains("Map")) {
+            openInteractiveMap();
+        } else if (action.contains("Live Updates")) {
+            openLiveUpdates();
+        } else if (action.contains("Notifications")) {
+            openNotifications();
+        } else if (action.contains("Settings")) {
+            openSettings();
+        } else if (action.contains("Facilities")) {
+            openFacilities();
+        } else if (action.contains("Profile")) {
+            openProfile();
+        }
+    }
+
+    private void openLiveUpdates() {
+        try {
+            if (liveUpdatesFrame == null || !liveUpdatesFrame.isVisible()) {
+                liveUpdatesFrame = new LiveUpdates();
+                liveUpdatesFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                liveUpdatesFrame.addWindowListener(new java.awt.event.WindowAdapter() {
+                    @Override
+                    public void windowClosed(java.awt.event.WindowEvent e) {
+                        liveUpdatesFrame = null;
+                    }
+                });
+            }
+            liveUpdatesFrame.setVisible(true);
+            liveUpdatesFrame.toFront();
+        } catch (Exception e) {
+            showFeatureMessage("Live Updates", "Real-time campus status and accessibility information");
         }
     }
 
     private void openInteractiveMap() {
         try {
-            JOptionPane.showMessageDialog(this,
-                    "🏫 Campus Map\n\n" +
-                            "Opening interactive campus navigation...\n" +
-                            "This will show:\n" +
-                            "• Building locations\n" +
-                            "• Accessible routes\n" +
-                            "• Your current position\n" +
-                            "• Navigation to destinations",
-                    "Campus Map",
-                    JOptionPane.INFORMATION_MESSAGE);
+            if (mapFrame == null || !mapFrame.isVisible()) {
+                mapFrame = new CampusMap();
+                mapFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                mapFrame.addWindowListener(new java.awt.event.WindowAdapter() {
+                    @Override
+                    public void windowClosed(java.awt.event.WindowEvent e) {
+                        mapFrame = null;
+                    }
+                });
+            }
+            mapFrame.setVisible(true);
+            mapFrame.toFront();
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Map feature is under development", "Coming Soon", JOptionPane.INFORMATION_MESSAGE);
+            showFeatureMessage("Interactive Map", "Explore campus with accessibility-optimized routes");
         }
     }
 
-    private void openEventManager() {
-        try {
-            // Open the EventGUI for staff/lecturers to manage events
-            new EventGUI().setVisible(true);
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this,
-                    "Error opening Event Manager: " + e.getMessage() +
-                            "\n\nMake sure EventGUI class is available.",
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
+    // ===== ENHANCED NOTIFICATIONS METHOD =====
+    private void openNotifications() {
+        // Create and show the modern notifications page
+        if (notificationsPage == null || !notificationsPage.isVisible()) {
+            notificationsPage = new NotificationsPage(this);
+            notificationsPage.addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override
+                public void windowClosed(java.awt.event.WindowEvent e) {
+                    // Clear notifications when the notifications page is closed
+                    notificationCount = 0;
+                    updateNotificationBadge();
+                }
+
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    // Clear notifications when the notifications page is closing
+                    notificationCount = 0;
+                    updateNotificationBadge();
+                }
+            });
         }
+
+        // Center the notifications page relative to dashboard
+        notificationsPage.setLocationRelativeTo(this);
+        notificationsPage.setVisible(true);
+
+        // Bring to front and request focus
+        notificationsPage.toFront();
+        notificationsPage.requestFocus();
+
+        // Optional: Add opening animation effect
+        animateNotificationOpening();
     }
 
-    private void openEventBrowser() {
-        try {
-            // Open the AvailableEventsGUI for students to browse events
-            new AvailableEventsGUI().setVisible(true);
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this,
-                    "Error opening Event Browser: " + e.getMessage() +
-                            "\n\nMake sure AvailableEventsGUI class is available.",
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
-        }
+    private void animateNotificationOpening() {
+        // Add a subtle animation when opening notifications
+        Timer openTimer = new Timer(10, new ActionListener() {
+            float scale = 0.8f;
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                scale += 0.05f;
+                if (scale >= 1.0f) {
+                    scale = 1.0f;
+                    ((Timer)e.getSource()).stop();
+                }
+            }
+        });
+        openTimer.start();
     }
 
-    private void openInteractiveMapWithDestination(String destination) {
+    private void openSettings() {
+        showFeatureMessage("Settings", "Configure your preferences and accessibility options");
+    }
+
+    private void openFacilities() {
+        showFeatureMessage("Campus Facilities", "Discover accessible buildings and amenities");
+    }
+
+    private void openProfile() {
+        showFeatureMessage("User Profile", "Manage your account and accessibility settings");
+    }
+
+    private void showFeatureMessage(String title, String message) {
         JOptionPane.showMessageDialog(this,
-                "🗺️  Navigation Started\n\n" +
-                        "Destination: " + destination + "\n" +
-                        "Calculating most accessible route...\n" +
-                        "Considering your preferences:\n" +
-                        "• " + currentUser.getDeviceType() + "\n" +
-                        "• " + (currentUser.isAvoidStairs() ? "Avoiding stairs" : "No stair restrictions") + "\n" +
-                        "• Minimum width: " + currentUser.getMinPathWidthCm() + " cm",
-                "Navigation to " + destination,
+                "<html><div style='text-align: center; width: 250px;'><b>" + title + "</b><br><br>" + message + "</div></html>",
+                title,
                 JOptionPane.INFORMATION_MESSAGE);
-    }
-
-    // ===== USER MANAGEMENT METHODS =====
-
-    public void setUserData(User user) {
-        this.currentUser = user;
-        if (nameLabel != null) nameLabel.setText(user.getName());
-        if (surnameLabel != null) surnameLabel.setText(user.getSurname());
-        if (studentNumberLabel != null) studentNumberLabel.setText(user.getStudentNumber());
-        if (ageLabel != null) ageLabel.setText(String.valueOf(user.getAge()));
-        if (genderLabel != null) genderLabel.setText(user.getGender());
-        if (emailLabel != null) emailLabel.setText(user.getEmail());
-
-        // Set accessibility information
-        if (deviceTypeLabel != null) deviceTypeLabel.setText(user.getDeviceType());
-
-        // Build accessibility needs string
-        if (accessibilityLabel != null) {
-            StringBuilder accessibilityNeeds = new StringBuilder();
-            if (user.isAvoidStairs()) accessibilityNeeds.append("Avoid Stairs");
-            if (user.isPreferRamps()) {
-                if (accessibilityNeeds.length() > 0) accessibilityNeeds.append(", ");
-                accessibilityNeeds.append("Prefer Ramps");
-            }
-            if (user.getMinPathWidthCm() != null && user.getMinPathWidthCm() > 90) {
-                if (accessibilityNeeds.length() > 0) accessibilityNeeds.append(", ");
-                accessibilityNeeds.append("Min Width: ").append(user.getMinPathWidthCm()).append("cm");
-            }
-
-            if (accessibilityNeeds.length() == 0) {
-                accessibilityNeeds.append("Standard Accessibility");
-            }
-            accessibilityLabel.setText(accessibilityNeeds.toString());
-        }
-
-        // Set default values for navigation fields
-        if (courseField != null) {
-            courseField.setText("Applications Development");
-        }
-        if (facultyComboBox != null) {
-            facultyComboBox.setSelectedItem("Informatics and Design");
-        }
     }
 
     private void logout() {
         int confirm = JOptionPane.showConfirmDialog(this,
-                "Are you sure you want to logout?",
+                "<html><div style='text-align: center;'>Are you sure you want to logout?</div></html>",
                 "Confirm Logout",
-                JOptionPane.YES_NO_OPTION);
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE);
 
         if (confirm == JOptionPane.YES_OPTION) {
+            if (clockTimer != null) clockTimer.stop();
+            if (animationTimer != null) animationTimer.stop();
+            if (notificationTimer != null) notificationTimer.stop();
+
+            if (mapFrame != null) mapFrame.dispose();
+            if (settingsFrame != null) settingsFrame.dispose();
+            if (liveUpdatesFrame != null) liveUpdatesFrame.dispose();
+            if (notificationsPage != null) notificationsPage.dispose();
+
             this.dispose();
-            new Login().setVisible(true);
+            // new Login().setVisible(true);
         }
     }
 
-    // ===== MAIN METHOD FOR TESTING =====
+    public void setUserData(User user) {
+        this.currentUser = user;
+        updateUserInterface();
+    }
+
+    private void updateUserInterface() {
+        if (currentUser != null && greetingLabel != null) {
+            String greeting = getTimeBasedGreeting();
+            greetingLabel.setText(greeting + ", " + currentUser.getName() + "! • " +
+                    new SimpleDateFormat("EEEE, MMMM d, yyyy").format(new Date()));
+        }
+    }
+
+    private void loadLogo() {
+        try {
+            logoIcon = new ImageIcon("resources/images/20251013_0428_Campus Access Logo_simple_compose_01k7dp8zxzftq9kghhg6typvaz.png");
+            if (logoIcon.getImageLoadStatus() == MediaTracker.COMPLETE) {
+                Image image = logoIcon.getImage();
+                Image resizedImage = image.getScaledInstance(50, 50, Image.SCALE_SMOOTH);
+                logoIcon = new ImageIcon(resizedImage);
+            } else {
+                logoIcon = null;
+            }
+        } catch (Exception e) {
+            logoIcon = null;
+        }
+    }
+
+    // Method to add notifications from other parts of the application
+    public void addNotification(String message, String priority) {
+        notificationCount++;
+        updateNotificationBadge();
+
+        // Optional: Show a toast notification
+        showToastNotification("New Notification: " + message);
+    }
+
+    private void showToastNotification(String message) {
+        // Create a toast-like notification
+        JWindow toastWindow = new JWindow(this);
+        toastWindow.setSize(300, 60);
+        toastWindow.setLocationRelativeTo(this);
+        toastWindow.setAlwaysOnTop(true);
+
+        JPanel toastPanel = new JPanel(new BorderLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2d.setColor(new Color(33, 64, 98, 230));
+                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
+            }
+        };
+        toastPanel.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
+        toastPanel.setOpaque(false);
+
+        JLabel toastLabel = new JLabel(message);
+        toastLabel.setForeground(Color.WHITE);
+        toastLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+
+        toastPanel.add(toastLabel, BorderLayout.CENTER);
+        toastWindow.add(toastPanel);
+        toastWindow.setVisible(true);
+
+        // Auto-close after 3 seconds
+        Timer closeTimer = new Timer(3000, e -> toastWindow.dispose());
+        closeTimer.setRepeats(false);
+        closeTimer.start();
+    }
 
     public static void main(String[] args) {
-        // Initialize database
-        DatabaseConnection.initializeDatabase();
-        UserDAO.createUsersTable();
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         SwingUtilities.invokeLater(() -> {
-            Dashboard dashboard = new Dashboard();
-
-            // Test with sample user data including accessibility preferences
-            User testUser = new User("John", "Doe", "ST123456", 21, "Male",
-                    "john.doe@email.com", "Wheelchair", true, true, 120);
-            dashboard.setUserData(testUser);
-
-            dashboard.setVisible(true);
+            new Dashboard().setVisible(true);
         });
     }
 }
