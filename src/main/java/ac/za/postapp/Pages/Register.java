@@ -511,7 +511,7 @@ public class Register extends JFrame {
             return false;
         }
 
-        if (!email.contains("@") || !email.contains(".")) {
+        if (!email.contains("@") || !email.contains(".") || !email.contains("mycput.ac.za")) {
             showErrorDialog("Please enter a valid email address.");
             return false;
         }

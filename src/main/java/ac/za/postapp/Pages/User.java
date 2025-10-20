@@ -104,4 +104,29 @@ public class User {
                 ", deviceType='" + deviceType + '\'' +
                 '}';
     }
+
+    public String getPhone() {
+        return "";
+    }
+    public void setPhone(String trim) {
+    }
+    public Object getFaculty() {
+        return "";
+    }
+    public void setFaculty(String selectedItem) {
+    }
+    public void setCourse(String trim) {
+    }
+    public String getCourse() {
+        return "";
+    }
+    public String getBio() {
+        return "";
+    }
+    public void setBio(String trim) {
+    }
+
+
+
+
 }

@@ -30,6 +30,7 @@ public class Dashboard extends JFrame {
     private JFrame mapFrame;
     private JFrame settingsFrame;
     private JFrame liveUpdatesFrame;
+    private JFrame eventsFrame;
     private NotificationsPage notificationsPage;
 
     // Color scheme matching Register page
@@ -410,6 +411,7 @@ public class Dashboard extends JFrame {
         String[] shortcuts = {
                 "🗺️ Interactive Map",
                 "📊 Live Updates",
+                "📅 Campus Events",
                 "🔔 Notifications",
                 "⚙️ Settings",
                 "🏛️ Facilities",
@@ -432,19 +434,19 @@ public class Dashboard extends JFrame {
 
         // Initialize animated cards
         featureCards = new AnimatedCard[4];
-        String[] titles = {"Quick Navigation", "Live Updates", "Campus Explorer", "Notifications"};
-        String[] emojis = {"🧭", "📊", "🏛️", "🔔"};
+        String[] titles = {"Quick Navigation", "Campus Events", "Campus Facilities", "Live Updates"};
+        String[] emojis = {"🧭", "📅", "🏛️", "📊"};
         String[] descriptions = {
                 "Get instant directions to any campus location with accessibility-optimized routes",
-                "Monitor real-time status of elevators, stairs, and campus facilities",
+                "Browse and filter accessible campus events with detailed information",
                 "Discover buildings, facilities, and accessible amenities across campus",
-                "Real-time alerts about elevator outages and accessibility updates"
+                "Monitor real-time status of elevators, stairs, and campus facilities"
         };
         Color[] colors = {
                 new Color(52, 152, 219),    // Blue for Navigation
-                new Color(46, 204, 113),    // Green for Live Updates
-                new Color(155, 89, 182),    // Purple for Campus Explorer
-                new Color(41, 128, 185)     // Professional Blue for Notifications
+                new Color(155, 89, 182),    // Purple for Events
+                new Color(46, 204, 113),    // Green for Facilities
+                new Color(41, 128, 185)     // Professional Blue for Live Updates
         };
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -649,14 +651,14 @@ public class Dashboard extends JFrame {
                 case "Quick Navigation":
                     openInteractiveMap();
                     break;
-                case "Live Updates":
-                    openLiveUpdates();
+                case "Campus Events":
+                    openEvents();
                     break;
-                case "Campus Explorer":
+                case "Campus Facilities":
                     openFacilities();
                     break;
-                case "Notifications":
-                    openNotifications();
+                case "Live Updates":
+                    openLiveUpdates();
                     break;
             }
 
@@ -745,12 +747,18 @@ public class Dashboard extends JFrame {
 
         JButton helpBtn = createTextButton("Help");
         JButton feedbackBtn = createTextButton("Feedback");
+        JButton eventsBtn = createTextButton("Events");
         JButton logoutBtn = createTextButton("Logout");
 
+        // Add action listeners
+        helpBtn.addActionListener(e -> openHelp());
+        feedbackBtn.addActionListener(e -> openFeedback());
+        eventsBtn.addActionListener(e -> openEvents());
         logoutBtn.addActionListener(e -> logout());
 
         buttonPanel.add(helpBtn);
         buttonPanel.add(feedbackBtn);
+        buttonPanel.add(eventsBtn);
         buttonPanel.add(logoutBtn);
 
         bottomBar.add(statusLabel, BorderLayout.WEST);
@@ -903,6 +911,8 @@ public class Dashboard extends JFrame {
             openInteractiveMap();
         } else if (action.contains("Live Updates")) {
             openLiveUpdates();
+        } else if (action.contains("Events")) {
+            openEvents();
         } else if (action.contains("Notifications")) {
             openNotifications();
         } else if (action.contains("Settings")) {
@@ -949,6 +959,25 @@ public class Dashboard extends JFrame {
             mapFrame.toFront();
         } catch (Exception e) {
             showFeatureMessage("Interactive Map", "Explore campus with accessibility-optimized routes");
+        }
+    }
+
+    private void openEvents() {
+        try {
+            if (eventsFrame == null || !eventsFrame.isVisible()) {
+                eventsFrame = new AvailableEventsGUI();
+                eventsFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                eventsFrame.addWindowListener(new java.awt.event.WindowAdapter() {
+                    @Override
+                    public void windowClosed(java.awt.event.WindowEvent e) {
+                        eventsFrame = null;
+                    }
+                });
+            }
+            eventsFrame.setVisible(true);
+            eventsFrame.toFront();
+        } catch (Exception e) {
+            showFeatureMessage("Campus Events", "Browse and filter accessible campus events");
         }
     }
 
@@ -1003,15 +1032,53 @@ public class Dashboard extends JFrame {
     }
 
     private void openSettings() {
-        showFeatureMessage("Settings", "Configure your preferences and accessibility options");
+        try {
+            SettingsPage settingsDialog = new SettingsPage(this);
+            settingsDialog.setVisible(true);
+        } catch (Exception e) {
+            showFeatureMessage("Settings", "Configure your preferences and accessibility options");
+        }
     }
 
     private void openFacilities() {
-        showFeatureMessage("Campus Facilities", "Discover accessible buildings and amenities");
+        try {
+            JFrame facilitiesFrame = new JFrame("Campus Facilities");
+            facilitiesFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            facilitiesFrame.add(new FacultyPage());
+            facilitiesFrame.pack();
+            facilitiesFrame.setSize(900, 700);
+            facilitiesFrame.setLocationRelativeTo(this);
+            facilitiesFrame.setVisible(true);
+        } catch (Exception e) {
+            showFeatureMessage("Campus Facilities", "Discover accessible buildings and amenities");
+        }
     }
 
     private void openProfile() {
-        showFeatureMessage("User Profile", "Manage your account and accessibility settings");
+        try {
+            ProfilePage profileDialog = new ProfilePage(this, currentUser);
+            profileDialog.setVisible(true);
+        } catch (Exception e) {
+            showFeatureMessage("User Profile", "Manage your account and accessibility settings");
+        }
+    }
+
+    private void openHelp() {
+        try {
+            HelpPage helpDialog = new HelpPage(this);
+            helpDialog.setVisible(true);
+        } catch (Exception e) {
+            showFeatureMessage("Help & Support", "Get assistance and learn how to use the app");
+        }
+    }
+
+    private void openFeedback() {
+        try {
+            FeedbackPage feedbackDialog = new FeedbackPage(this);
+            feedbackDialog.setVisible(true);
+        } catch (Exception e) {
+            showFeatureMessage("Feedback", "Share your feedback and report issues");
+        }
     }
 
     private void showFeatureMessage(String title, String message) {
@@ -1036,10 +1103,11 @@ public class Dashboard extends JFrame {
             if (mapFrame != null) mapFrame.dispose();
             if (settingsFrame != null) settingsFrame.dispose();
             if (liveUpdatesFrame != null) liveUpdatesFrame.dispose();
+            if (eventsFrame != null) eventsFrame.dispose();
             if (notificationsPage != null) notificationsPage.dispose();
 
             this.dispose();
-            // new Login().setVisible(true);
+            new Login().setVisible(true);
         }
     }
 
