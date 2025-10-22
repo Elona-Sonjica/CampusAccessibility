@@ -662,6 +662,9 @@ public class SettingsPage extends JDialog {
         checkBox.setBackground(new Color(255, 255, 255, 0));
         checkBox.setFocusPainted(false);
         checkBox.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        checkBox.setOpaque(false);
+        checkBox.setContentAreaFilled(false);
+        checkBox.setBorderPainted(false);
         return checkBox;
     }
 

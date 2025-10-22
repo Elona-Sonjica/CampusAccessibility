@@ -1,7 +1,5 @@
 package ac.za.postapp.Pages;
 
-// emeritusApex
-
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
@@ -13,6 +11,8 @@ import java.awt.geom.Ellipse2D;
 import java.util.HashMap;
 import java.util.ArrayList;
 
+// emeritusApex
+
 public class CampusMap extends JFrame {
     private JComboBox<String> currentLocationCombo;
     private JComboBox<String> destinationCombo;
@@ -22,6 +22,7 @@ public class CampusMap extends JFrame {
     private JButton pauseButton;
     private JButton resetButton;
     private JButton backToDashboardButton;
+    private JButton logoutButton;
     private MapPanel mapPanel;
     private Timer animationTimer;
     private int animationStep = 0;
@@ -32,12 +33,13 @@ public class CampusMap extends JFrame {
     private ArrayList<Point> pathPoints;
     private HashMap<String, Boolean> blockedPaths;
 
+    // Mobility options
     private boolean avoidStairs = true;
     private boolean preferElevators = true;
     private boolean wheelchairAccessible = false;
 
     public CampusMap() {
-        setTitle("Campus Map - Navigation");
+        setTitle("CPUT D6 Campus Map - Advanced Navigation with Live Tracking");
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setSize(1200, 900);
         setLocationRelativeTo(null);
@@ -46,15 +48,18 @@ public class CampusMap extends JFrame {
         initializeLocationCoordinates();
         initializeBlockedPaths();
 
+        // ===== Main Container with Blue Gradient Background =====
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10)) {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 Graphics2D g2d = (Graphics2D) g;
                 g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                // Create beautiful blue gradient
                 GradientPaint gradient = new GradientPaint(
-                        0, 0, new Color(74, 107, 136),
-                        getWidth(), getHeight(), new Color(33, 64, 98)
+                        0, 0, new Color(224, 247, 255),
+                        getWidth(), getHeight(), new Color(179, 229, 255)
                 );
                 g2d.setPaint(gradient);
                 g2d.fillRect(0, 0, getWidth(), getHeight());
@@ -62,29 +67,35 @@ public class CampusMap extends JFrame {
         };
         mainPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
+        // ===== Top Control Panel =====
         JPanel topPanel = createControlPanel();
         mainPanel.add(topPanel, BorderLayout.NORTH);
 
+        // ===== Center - Map and Directions =====
         JSplitPane centerSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         centerSplit.setDividerLocation(800);
         centerSplit.setResizeWeight(0.7);
 
+        // Map Panel with Scroll
         mapPanel = new MapPanel();
         JScrollPane mapScroll = new JScrollPane(mapPanel);
         mapScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         mapScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
-        TitledBorder mapBorder = BorderFactory.createTitledBorder("Campus Floor Plan - Level 2");
-        mapBorder.setTitleColor(Color.WHITE);
+        // Create proper TitledBorder for map
+        TitledBorder mapBorder = BorderFactory.createTitledBorder("Campus Floor Plan - Level 2 - Live Tracking");
+        mapBorder.setTitleColor(new Color(13, 71, 161));
         mapScroll.setBorder(mapBorder);
 
         centerSplit.setLeftComponent(mapScroll);
 
+        // Directions Panel with Scroll
         JPanel directionsPanel = createDirectionsPanel();
         centerSplit.setRightComponent(directionsPanel);
 
         mainPanel.add(centerSplit, BorderLayout.CENTER);
 
+        // ===== Bottom Navigation Panel =====
         JPanel bottomNavPanel = createBottomNavigationPanel();
         mainPanel.add(bottomNavPanel, BorderLayout.SOUTH);
 
@@ -96,8 +107,9 @@ public class CampusMap extends JFrame {
     private void initializeLocationCoordinates() {
         locationCoordinates = new HashMap<>();
 
+        // === ENGINEERING DEPARTMENT - LEFT WING ===
         locationCoordinates.put("Engineering Main Entrance", new Point(150, 650));
-        locationCoordinates.put("Engineering Deans Office", new Point(200, 600));
+        locationCoordinates.put("Engineering Dean's Office", new Point(200, 600));
         locationCoordinates.put("Engineering Lab 101", new Point(250, 550));
         locationCoordinates.put("Engineering Lab 102", new Point(300, 550));
         locationCoordinates.put("Engineering Lecture Hall A", new Point(200, 500));
@@ -107,6 +119,7 @@ public class CampusMap extends JFrame {
         locationCoordinates.put("Mechanical Engineering Dept", new Point(220, 500));
         locationCoordinates.put("Engineering Library", new Point(280, 500));
 
+        // === HEALTH SCIENCES DEPARTMENT - CENTER ===
         locationCoordinates.put("Health Sciences Entrance", new Point(500, 650));
         locationCoordinates.put("Medical Lab 201", new Point(550, 600));
         locationCoordinates.put("Anatomy Lab 202", new Point(600, 600));
@@ -118,6 +131,7 @@ public class CampusMap extends JFrame {
         locationCoordinates.put("Medical Library", new Point(590, 500));
         locationCoordinates.put("Health Admin Office", new Point(560, 450));
 
+        // === BUSINESS DEPARTMENT - RIGHT WING ===
         locationCoordinates.put("Business School Entrance", new Point(800, 650));
         locationCoordinates.put("Finance Lab 301", new Point(850, 600));
         locationCoordinates.put("Marketing Center", new Point(900, 600));
@@ -129,6 +143,7 @@ public class CampusMap extends JFrame {
         locationCoordinates.put("Case Study Room", new Point(880, 500));
         locationCoordinates.put("Executive Boardroom", new Point(860, 450));
 
+        // === LIBRARY & STUDY AREAS ===
         locationCoordinates.put("Main Library", new Point(400, 400));
         locationCoordinates.put("Library Study Area", new Point(350, 350));
         locationCoordinates.put("Library Computer Lab", new Point(450, 350));
@@ -138,6 +153,7 @@ public class CampusMap extends JFrame {
         locationCoordinates.put("Research Center", new Point(400, 350));
         locationCoordinates.put("Periodicals Section", new Point(440, 350));
 
+        // === LABS & RESEARCH ===
         locationCoordinates.put("Computer Lab 401", new Point(300, 350));
         locationCoordinates.put("Physics Lab 402", new Point(250, 300));
         locationCoordinates.put("Chemistry Lab 403", new Point(350, 300));
@@ -147,6 +163,7 @@ public class CampusMap extends JFrame {
         locationCoordinates.put("AI Research Center", new Point(340, 300));
         locationCoordinates.put("Innovation Hub", new Point(390, 320));
 
+        // === FOOD & SERVICES ===
         locationCoordinates.put("Main Cafeteria", new Point(700, 400));
         locationCoordinates.put("Coffee Shop", new Point(650, 450));
         locationCoordinates.put("Vending Area", new Point(750, 450));
@@ -155,12 +172,14 @@ public class CampusMap extends JFrame {
         locationCoordinates.put("Student Lounge", new Point(670, 380));
         locationCoordinates.put("Campus Store", new Point(730, 380));
 
+        // === ADMINISTRATION ===
         locationCoordinates.put("Admin Office", new Point(500, 550));
         locationCoordinates.put("Student Services", new Point(480, 500));
         locationCoordinates.put("Registrar Office", new Point(520, 500));
         locationCoordinates.put("Finance Office", new Point(490, 450));
         locationCoordinates.put("HR Department", new Point(530, 450));
 
+        // === SPECIAL FACILITIES ===
         locationCoordinates.put("Elevator A", new Point(350, 600));
         locationCoordinates.put("Elevator B", new Point(700, 600));
         locationCoordinates.put("Elevator C", new Point(500, 400));
@@ -177,6 +196,7 @@ public class CampusMap extends JFrame {
         locationCoordinates.put("Security Office", new Point(550, 700));
         locationCoordinates.put("First Aid Room", new Point(600, 700));
 
+        // === HALLWAY JUNCTIONS & PASSAGES ===
         locationCoordinates.put("Hallway Junction A", new Point(350, 500));
         locationCoordinates.put("Hallway Junction B", new Point(500, 500));
         locationCoordinates.put("Hallway Junction C", new Point(700, 500));
@@ -186,6 +206,7 @@ public class CampusMap extends JFrame {
         locationCoordinates.put("Hallway Junction G", new Point(200, 600));
         locationCoordinates.put("Hallway Junction H", new Point(800, 600));
 
+        // Additional passages for direct routing
         locationCoordinates.put("Engineering Corridor", new Point(250, 600));
         locationCoordinates.put("Health Corridor", new Point(550, 600));
         locationCoordinates.put("Business Corridor", new Point(850, 600));
@@ -195,6 +216,7 @@ public class CampusMap extends JFrame {
 
     private void initializeBlockedPaths() {
         blockedPaths = new HashMap<>();
+        // Define blocked paths between locations
         blockedPaths.put("Engineering Lab 101-Engineering Workshop", true);
         blockedPaths.put("Health Sciences Entrance-Medical Lab 201", false);
         blockedPaths.put("Stairs A-Elevator A", false);
@@ -205,13 +227,14 @@ public class CampusMap extends JFrame {
     private JPanel createControlPanel() {
         JPanel topPanel = new JPanel(new GridBagLayout());
 
+        // Create proper TitledBorder for control panel
         TitledBorder controlBorder = BorderFactory.createTitledBorder("Navigation Controls");
-        controlBorder.setTitleColor(Color.WHITE);
+        controlBorder.setTitleColor(new Color(13, 71, 161));
         topPanel.setBorder(BorderFactory.createCompoundBorder(
                 controlBorder,
                 BorderFactory.createEmptyBorder(10, 10, 10, 10)
         ));
-        topPanel.setBackground(new Color(255, 255, 255, 180));
+        topPanel.setBackground(new Color(225, 245, 254, 220));
         topPanel.setOpaque(true);
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -219,10 +242,11 @@ public class CampusMap extends JFrame {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0;
 
+        // Current Location
         gbc.gridx = 0; gbc.gridy = 0;
         JLabel currentLabel = new JLabel("Current Location:");
         currentLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        currentLabel.setForeground(Color.WHITE);
+        currentLabel.setForeground(new Color(13, 71, 161));
         topPanel.add(currentLabel, gbc);
 
         gbc.gridx = 1;
@@ -232,10 +256,11 @@ public class CampusMap extends JFrame {
         currentLocationCombo.setBackground(Color.WHITE);
         topPanel.add(currentLocationCombo, gbc);
 
+        // Destination
         gbc.gridx = 0; gbc.gridy = 1;
         JLabel destLabel = new JLabel("Destination:");
         destLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        destLabel.setForeground(Color.WHITE);
+        destLabel.setForeground(new Color(13, 71, 161));
         topPanel.add(destLabel, gbc);
 
         gbc.gridx = 1;
@@ -245,14 +270,15 @@ public class CampusMap extends JFrame {
         destinationCombo.setBackground(Color.WHITE);
         topPanel.add(destinationCombo, gbc);
 
+        // Buttons
         gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 3;
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
         buttonPanel.setOpaque(false);
 
-        getDirectionsButton = createStyledButton("Get Directions", new Color(52, 152, 219));
-        startNavigationButton = createStyledButton("Start Navigation", new Color(46, 204, 113));
-        pauseButton = createStyledButton("Pause", new Color(241, 196, 15));
-        resetButton = createStyledButton("Reset", new Color(155, 89, 182));
+        getDirectionsButton = createStyledButton("Get Directions", new Color(30, 136, 229));
+        startNavigationButton = createStyledButton("Start Navigation", new Color(0, 150, 136));
+        pauseButton = createStyledButton("Pause", new Color(255, 152, 0));
+        resetButton = createStyledButton("Reset", new Color(103, 58, 183));
 
         startNavigationButton.setEnabled(false);
         pauseButton.setEnabled(false);
@@ -264,6 +290,7 @@ public class CampusMap extends JFrame {
 
         topPanel.add(buttonPanel, gbc);
 
+        // Mobility Options
         gbc.gridx = 0; gbc.gridy = 3; gbc.gridwidth = 3;
         addMobilityOptions(topPanel);
 
@@ -274,23 +301,24 @@ public class CampusMap extends JFrame {
         JPanel mobilityPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 5));
         mobilityPanel.setOpaque(false);
 
+        // Create proper TitledBorder
         TitledBorder mobilityBorder = BorderFactory.createTitledBorder("Mobility Options");
-        mobilityBorder.setTitleColor(Color.WHITE);
+        mobilityBorder.setTitleColor(new Color(13, 71, 161));
         mobilityPanel.setBorder(mobilityBorder);
 
         JCheckBox stairsCheckbox = new JCheckBox("Avoid Stairs", true);
         stairsCheckbox.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        stairsCheckbox.setForeground(Color.WHITE);
+        stairsCheckbox.setForeground(new Color(13, 71, 161));
         stairsCheckbox.addActionListener(e -> avoidStairs = stairsCheckbox.isSelected());
 
         JCheckBox elevatorCheckbox = new JCheckBox("Prefer Elevators", true);
         elevatorCheckbox.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        elevatorCheckbox.setForeground(Color.WHITE);
+        elevatorCheckbox.setForeground(new Color(13, 71, 161));
         elevatorCheckbox.addActionListener(e -> preferElevators = elevatorCheckbox.isSelected());
 
         JCheckBox wheelchairCheckbox = new JCheckBox("Wheelchair Accessible");
         wheelchairCheckbox.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        wheelchairCheckbox.setForeground(Color.WHITE);
+        wheelchairCheckbox.setForeground(new Color(13, 71, 161));
         wheelchairCheckbox.addActionListener(e -> {
             wheelchairAccessible = wheelchairCheckbox.isSelected();
             if (wheelchairAccessible) {
@@ -305,6 +333,7 @@ public class CampusMap extends JFrame {
         mobilityPanel.add(elevatorCheckbox);
         mobilityPanel.add(wheelchairCheckbox);
 
+        // Add to main panel using GridBagConstraints
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0; gbc.gridy = 4; gbc.gridwidth = 3;
         gbc.insets = new Insets(10, 8, 5, 8);
@@ -315,13 +344,14 @@ public class CampusMap extends JFrame {
     private JPanel createDirectionsPanel() {
         JPanel directionsPanel = new JPanel(new BorderLayout());
 
+        // Create proper TitledBorder
         TitledBorder directionsBorder = BorderFactory.createTitledBorder("Step-by-Step Directions");
-        directionsBorder.setTitleColor(Color.WHITE);
+        directionsBorder.setTitleColor(new Color(13, 71, 161));
         directionsPanel.setBorder(BorderFactory.createCompoundBorder(
                 directionsBorder,
                 BorderFactory.createEmptyBorder(10, 10, 10, 10)
         ));
-        directionsPanel.setBackground(new Color(255, 255, 255, 180));
+        directionsPanel.setBackground(new Color(225, 245, 254, 220));
 
         directionsArea = new JTextArea();
         directionsArea.setEditable(false);
@@ -329,17 +359,18 @@ public class CampusMap extends JFrame {
         directionsArea.setWrapStyleWord(true);
         directionsArea.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         directionsArea.setBackground(new Color(240, 249, 255));
-        directionsArea.setForeground(new Color(33, 64, 98));
-        directionsArea.setText("CAMPUS NAVIGATION SYSTEM\n\n" +
+        directionsArea.setForeground(new Color(13, 71, 161));
+        directionsArea.setText("WELCOME TO CPUT CAMPUS NAVIGATION SYSTEM\n\n" +
                 "Select your current location and destination to get detailed navigation instructions.\n\n" +
                 "CAMPUS FACILITIES:\n" +
                 "• Engineering Department (Left Wing)\n" +
                 "• Health Sciences (Center Wing)\n" +
                 "• Business School (Right Wing)\n" +
-                "• Library & Study Areas\n" +
+                "• Library & Study Areas (Top Center)\n" +
                 "• Labs & Research Centers\n" +
                 "• Food Court & Services\n" +
-                "• Elevators & Staircases\n\n" +
+                "• Elevators & Staircases\n" +
+                "• Emergency Exits & Restrooms\n\n" +
                 "MOBILITY FEATURES:\n" +
                 "• Stair avoidance routes\n" +
                 "• Elevator preferred paths\n" +
@@ -357,19 +388,23 @@ public class CampusMap extends JFrame {
 
     private JPanel createBottomNavigationPanel() {
         JPanel bottomPanel = new JPanel(new BorderLayout());
-        bottomPanel.setBackground(new Color(255, 255, 255, 180));
+        bottomPanel.setBackground(new Color(225, 245, 254));
         bottomPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
 
+        // Status label
         JLabel statusLabel = new JLabel("System: Online • Accessibility: Active • GPS: Connected");
         statusLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        statusLabel.setForeground(Color.WHITE);
+        statusLabel.setForeground(new Color(13, 71, 161));
 
+        // Navigation buttons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 0));
         buttonPanel.setOpaque(false);
 
-        backToDashboardButton = createNavigationButton("Back to Dashboard", new Color(52, 152, 219));
+        backToDashboardButton = createNavigationButton("Back to Dashboard", new Color(30, 136, 229));
+        logoutButton = createNavigationButton("Logout", new Color(220, 53, 69));
 
         buttonPanel.add(backToDashboardButton);
+        buttonPanel.add(logoutButton);
 
         bottomPanel.add(statusLabel, BorderLayout.WEST);
         bottomPanel.add(buttonPanel, BorderLayout.EAST);
@@ -384,6 +419,7 @@ public class CampusMap extends JFrame {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
+                // Draw bubble shape
                 if (getModel().isPressed()) {
                     g2.setColor(color.darker());
                 } else if (getModel().isRollover()) {
@@ -457,6 +493,7 @@ public class CampusMap extends JFrame {
                     isNavigating = false;
                     showCelebration();
 
+                    // Auto-reset after 5 seconds
                     Timer resetTimer = new Timer(5000, new ActionListener() {
                         @Override
                         public void actionPerformed(ActionEvent e) {
@@ -472,14 +509,17 @@ public class CampusMap extends JFrame {
     }
 
     private void showCelebration() {
-        directionsArea.setText("CONGRATULATIONS!\n\n" +
+        directionsArea.setText("CELEBRATION!\n\n" +
+                "CONGRATULATIONS!\n\n" +
                 "You have successfully reached your destination!\n\n" +
                 "MISSION ACCOMPLISHED!\n" +
                 "Destination reached safely\n" +
-                "Journey completed successfully\n\n" +
-                "Thank you for using Campus Navigation System!\n\n" +
+                "Journey completed successfully\n" +
+                "Navigation mission successful\n\n" +
+                "Thank you for using CPUT Campus Navigation System!\n\n" +
                 "Auto-resetting in 5 seconds...");
 
+        // Visual celebration effect
         mapPanel.startCelebration();
     }
 
@@ -537,7 +577,31 @@ public class CampusMap extends JFrame {
         backToDashboardButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                // Close this map and return to dashboard
                 dispose();
+                // The dashboard window should already be open
+            }
+        });
+
+        logoutButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int confirm = JOptionPane.showConfirmDialog(CampusMap.this,
+                        "Are you sure you want to logout?",
+                        "Confirm Logout",
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.QUESTION_MESSAGE);
+
+                if (confirm == JOptionPane.YES_OPTION) {
+                    // Stop timers
+                    if (animationTimer != null) {
+                        animationTimer.stop();
+                    }
+
+                    // Close all windows and exit
+                    dispose();
+                    System.exit(0);
+                }
             }
         });
     }
@@ -553,6 +617,7 @@ public class CampusMap extends JFrame {
         pauseButton.setEnabled(false);
         pauseButton.setText("Pause");
 
+        // Clear the path and reset map
         mapPanel.setCurrentPosition(null);
         mapPanel.setDestination(null);
         mapPanel.setPathLocations(null);
@@ -560,16 +625,18 @@ public class CampusMap extends JFrame {
         mapPanel.stopCelebration();
         mapPanel.repaint();
 
-        directionsArea.setText("CAMPUS NAVIGATION SYSTEM\n\n" +
+        // Reset directions text
+        directionsArea.setText("WELCOME TO CPUT CAMPUS NAVIGATION SYSTEM\n\n" +
                 "Select your current location and destination to get detailed navigation instructions.\n\n" +
                 "CAMPUS FACILITIES:\n" +
                 "• Engineering Department (Left Wing)\n" +
                 "• Health Sciences (Center Wing)\n" +
                 "• Business School (Right Wing)\n" +
-                "• Library & Study Areas\n" +
+                "• Library & Study Areas (Top Center)\n" +
                 "• Labs & Research Centers\n" +
                 "• Food Court & Services\n" +
-                "• Elevators & Staircases\n\n" +
+                "• Elevators & Staircases\n" +
+                "• Emergency Exits & Restrooms\n\n" +
                 "MOBILITY FEATURES:\n" +
                 "• Stair avoidance routes\n" +
                 "• Elevator preferred paths\n" +
@@ -581,6 +648,7 @@ public class CampusMap extends JFrame {
     }
 
     private void showDirections(String from, String to) {
+        // Reset navigation state first
         resetNavigation();
 
         if (from.equals(to)) {
@@ -600,6 +668,7 @@ public class CampusMap extends JFrame {
             return;
         }
 
+        // Generate direct path with minimal waypoints
         pathLocations = generateDirectPath(from, to);
         pathPoints = generateGridPathPoints(pathLocations);
 
@@ -622,6 +691,7 @@ public class CampusMap extends JFrame {
 
         directions.append("STEP-BY-STEP DIRECTIONS:\n\n");
 
+        // Add detailed step-by-step directions
         for (int i = 1; i < pathLocations.length; i++) {
             String stepDescription = getDetailedDirectionText(pathLocations[i-1], pathLocations[i]);
             directions.append("STEP ").append(i).append(":\n");
@@ -650,10 +720,13 @@ public class CampusMap extends JFrame {
         Point fromPoint = locationCoordinates.get(from);
         Point toPoint = locationCoordinates.get(to);
 
+        // Direct path calculation - minimal waypoints
         boolean sameBuilding = isSameBuilding(fromPoint, toPoint);
 
         if (sameBuilding) {
+            // Within same building - direct path
             if (Math.abs(fromPoint.y - toPoint.y) > 100) {
+                // Need vertical movement
                 if (fromPoint.y < toPoint.y) {
                     path.add("Central Hallway");
                 } else {
@@ -661,6 +734,7 @@ public class CampusMap extends JFrame {
                 }
             }
         } else {
+            // Different buildings - use main corridors
             path.add(getNearestCorridor(fromPoint));
             path.add("Central Hallway");
             path.add(getNearestCorridor(toPoint));
@@ -671,6 +745,7 @@ public class CampusMap extends JFrame {
     }
 
     private boolean isSameBuilding(Point from, Point to) {
+        // Check if both points are in the same building section
         boolean fromEngineering = from.x < 400;
         boolean fromHealth = from.x >= 400 && from.x <= 700;
         boolean fromBusiness = from.x > 700;
@@ -711,6 +786,7 @@ public class CampusMap extends JFrame {
 
             gridPath.add(start);
 
+            // Move horizontally first, then vertically (NO DIAGONAL MOVEMENT)
             if (start.x != end.x) {
                 int xStep = (end.x > start.x) ? 5 : -5;
                 for (int x = start.x + xStep; x != end.x; x += xStep) {
@@ -718,6 +794,7 @@ public class CampusMap extends JFrame {
                 }
             }
 
+            // Then move vertically
             if (start.y != end.y) {
                 int yStep = (end.y > start.y) ? 5 : -5;
                 for (int y = start.y + yStep; y != end.y; y += yStep) {
@@ -738,6 +815,7 @@ public class CampusMap extends JFrame {
 
         StringBuilder direction = new StringBuilder();
 
+        // Determine primary direction
         if (toPt.y < fromPt.y - 20) {
             direction.append("HEAD NORTH: Continue straight ahead");
         } else if (toPt.y > fromPt.y + 20) {
@@ -750,6 +828,7 @@ public class CampusMap extends JFrame {
             direction.append("PROCEED: Continue forward to ");
         }
 
+        // Add facility-specific detailed instructions
         if (to.contains("Elevator")) {
             direction.append("\n   ELEVATOR ACCESS: Use the elevator to change floors");
             if (wheelchairAccessible) {
@@ -779,6 +858,7 @@ public class CampusMap extends JFrame {
             direction.append("\n   MAIN PASSAGEWAY: Continue through the corridor");
         }
 
+        // Add distance estimation
         double distance = fromPt.distance(toPt);
         direction.append(String.format("\n   Distance: Approximately %.0f meters", distance * 0.8));
 
@@ -813,6 +893,7 @@ public class CampusMap extends JFrame {
             navText.append("   • Estimated time remaining: ").append((pathPoints.size() - animationStep) / 20).append(" minutes\n");
             navText.append("   • Distance remaining: ").append(pathPoints.size() - animationStep).append(" meters\n\n");
 
+            // Add real-time navigation instructions
             if (nextLocation.contains("Elevator")) {
                 navText.append("ELEVATOR APPROACHING: Prepare to enter elevator\n");
             } else if (nextLocation.contains("Stairs")) {
@@ -829,6 +910,7 @@ public class CampusMap extends JFrame {
 
     private String getCurrentLocationName() {
         if (pathLocations != null && animationStep < pathPoints.size()) {
+            // Find which major location we're closest to
             Point currentPos = pathPoints.get(animationStep);
             String closest = pathLocations[0];
             double minDist = Double.MAX_VALUE;
@@ -855,6 +937,7 @@ public class CampusMap extends JFrame {
         return "Final Destination";
     }
 
+    // Enhanced Map Panel with expanded passages and direct routing
     class MapPanel extends JPanel {
         private Point currentPosition;
         private Point destination;
@@ -897,20 +980,24 @@ public class CampusMap extends JFrame {
 
         @Override
         protected void paintComponent(Graphics g) {
+            // Draw beautiful blue background first
             Graphics2D g2d = (Graphics2D) g;
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
+            // Blue gradient background
             GradientPaint backgroundGradient = new GradientPaint(
-                    0, 0, new Color(74, 107, 136),
-                    getWidth(), getHeight(), new Color(33, 64, 98)
+                    0, 0, new Color(225, 245, 254),
+                    getWidth(), getHeight(), new Color(179, 229, 255)
             );
             g2d.setPaint(backgroundGradient);
             g2d.fillRect(0, 0, getWidth(), getHeight());
 
+            // Celebration effect
             if (celebration) {
                 drawCelebrationEffect(g2d);
             }
 
+            // Now draw the map components
             drawGrid(g2d);
             drawBuildingLayout(g2d);
             drawExpandedPassages(g2d);
@@ -931,9 +1018,11 @@ public class CampusMap extends JFrame {
             long elapsed = currentTime - celebrationStartTime;
             float alpha = (float) (0.5 + 0.5 * Math.sin(elapsed * 0.01));
 
+            // Pulsing celebration background
             g2d.setColor(new Color(255, 255, 0, (int)(100 * alpha)));
             g2d.fillRect(0, 0, getWidth(), getHeight());
 
+            // Celebration text
             g2d.setColor(new Color(255, 215, 0));
             g2d.setFont(new Font("Arial", Font.BOLD, 48));
             String congrats = "CONGRATULATIONS!";
@@ -947,6 +1036,7 @@ public class CampusMap extends JFrame {
             g2d.setColor(new Color(200, 230, 255));
             g2d.setStroke(new BasicStroke(1));
 
+            // Draw grid lines
             for (int x = 0; x < getWidth(); x += GRID_SIZE) {
                 g2d.drawLine(x, 0, x, getHeight());
             }
@@ -956,16 +1046,21 @@ public class CampusMap extends JFrame {
         }
 
         private void drawBuildingLayout(Graphics2D g2d) {
+            // === EXPANDED MAIN HALLWAYS ===
             g2d.setColor(new Color(180, 200, 220));
-            g2d.setStroke(new BasicStroke(15));
+            g2d.setStroke(new BasicStroke(15)); // Wider hallways
 
-            g2d.drawLine(100, 600, 900, 600);
-            g2d.drawLine(200, 300, 800, 300);
+            // Main horizontal corridors
+            g2d.drawLine(100, 600, 900, 600); // Ground floor main corridor
+            g2d.drawLine(200, 300, 800, 300); // Upper floor main corridor
 
-            g2d.drawLine(350, 300, 350, 600);
-            g2d.drawLine(500, 300, 500, 600);
-            g2d.drawLine(700, 300, 700, 600);
+            // Vertical corridors connecting floors - EXPANDED
+            g2d.drawLine(350, 300, 350, 600); // Left vertical - wider
+            g2d.drawLine(500, 300, 500, 600); // Center vertical - wider
+            g2d.drawLine(700, 300, 700, 600); // Right vertical - wider
 
+            // === BUILDING OUTLINES ===
+            // Engineering Building (Left Wing)
             g2d.setColor(new Color(173, 216, 230, 180));
             g2d.fillRect(100, 450, 250, 200);
             g2d.setColor(new Color(30, 136, 229));
@@ -974,18 +1069,21 @@ public class CampusMap extends JFrame {
             g2d.setFont(new Font("Arial", Font.BOLD, 14));
             g2d.drawString("ENGINEERING", 140, 540);
 
+            // Health Sciences (Center Wing)
             g2d.setColor(new Color(144, 238, 144, 180));
             g2d.fillRect(350, 450, 350, 200);
             g2d.setColor(new Color(56, 142, 60));
             g2d.drawRect(350, 450, 350, 200);
             g2d.drawString("HEALTH SCIENCES", 420, 540);
 
+            // Business School (Right Wing)
             g2d.setColor(new Color(255, 255, 153, 180));
             g2d.fillRect(700, 450, 250, 200);
             g2d.setColor(new Color(245, 124, 0));
             g2d.drawRect(700, 450, 250, 200);
             g2d.drawString("BUSINESS SCHOOL", 740, 540);
 
+            // Library & Labs (Upper Floor)
             g2d.setColor(new Color(255, 182, 193, 180));
             g2d.fillRect(200, 100, 600, 200);
             g2d.setColor(new Color(194, 24, 91));
@@ -995,33 +1093,37 @@ public class CampusMap extends JFrame {
 
         private void drawExpandedPassages(Graphics2D g2d) {
             g2d.setColor(new Color(150, 180, 210));
-            g2d.setStroke(new BasicStroke(8));
+            g2d.setStroke(new BasicStroke(8)); // Wider passages
 
-            g2d.drawLine(150, 450, 150, 600);
-            g2d.drawLine(250, 450, 250, 600);
-            g2d.drawLine(350, 450, 350, 600);
+            // Building internal corridors - EXPANDED
+            g2d.drawLine(150, 450, 150, 600); // Engineering left corridor
+            g2d.drawLine(250, 450, 250, 600); // Engineering center corridor
+            g2d.drawLine(350, 450, 350, 600); // Engineering right corridor
 
-            g2d.drawLine(450, 450, 450, 600);
-            g2d.drawLine(550, 450, 550, 600);
-            g2d.drawLine(650, 450, 650, 600);
+            g2d.drawLine(450, 450, 450, 600); // Health left corridor
+            g2d.drawLine(550, 450, 550, 600); // Health center corridor
+            g2d.drawLine(650, 450, 650, 600); // Health right corridor
 
-            g2d.drawLine(750, 450, 750, 600);
-            g2d.drawLine(850, 450, 850, 600);
+            g2d.drawLine(750, 450, 750, 600); // Business left corridor
+            g2d.drawLine(850, 450, 850, 600); // Business center corridor
 
-            g2d.drawLine(100, 500, 350, 500);
-            g2d.drawLine(350, 500, 700, 500);
-            g2d.drawLine(700, 500, 950, 500);
+            // Cross passages in buildings
+            g2d.drawLine(100, 500, 350, 500); // Engineering horizontal
+            g2d.drawLine(350, 500, 700, 500); // Health horizontal
+            g2d.drawLine(700, 500, 950, 500); // Business horizontal
 
-            g2d.drawLine(200, 150, 800, 150);
-            g2d.drawLine(400, 100, 400, 200);
+            // Library passages
+            g2d.drawLine(200, 150, 800, 150); // Library main corridor
+            g2d.drawLine(400, 100, 400, 200); // Library vertical corridor
         }
 
         private void drawBlockedPaths(Graphics2D g2d) {
             g2d.setColor(new Color(255, 0, 0, 100));
             g2d.setStroke(new BasicStroke(6));
 
-            g2d.drawLine(250, 550, 250, 450);
-            g2d.drawLine(100, 550, 150, 550);
+            // Draw blocked paths
+            g2d.drawLine(250, 550, 250, 450); // Engineering Lab 101 to Workshop
+            g2d.drawLine(100, 550, 150, 550); // Emergency Exit A to Hallway
 
             g2d.setColor(Color.RED);
             g2d.setFont(new Font("Arial", Font.BOLD, 10));
@@ -1030,27 +1132,29 @@ public class CampusMap extends JFrame {
         }
 
         private void drawDoors(Graphics2D g2d) {
-            g2d.setColor(new Color(139, 69, 19));
-            g2d.setStroke(new BasicStroke(4));
+            g2d.setColor(new Color(139, 69, 19)); // Brown color for doors
+            g2d.setStroke(new BasicStroke(4)); // Thicker doors
 
+            // Main entrance doors
             int[][] doors = {
-                    {150, 650}, {500, 650}, {800, 650},
-                    {350, 600}, {500, 600}, {700, 600},
-                    {200, 300}, {400, 300}, {600, 300}, {800, 300},
-                    {250, 500}, {550, 500}, {850, 500}
+                    {150, 650}, {500, 650}, {800, 650}, // Building entrances
+                    {350, 600}, {500, 600}, {700, 600}, // Corridor doors
+                    {200, 300}, {400, 300}, {600, 300}, {800, 300}, // Upper floor doors
+                    {250, 500}, {550, 500}, {850, 500} // Internal building doors
             };
 
             for (int[] door : doors) {
-                g2d.fillRect(door[0]-10, door[1]-4, 20, 8);
+                g2d.fillRect(door[0]-10, door[1]-4, 20, 8); // Larger doors
                 g2d.setColor(Color.YELLOW);
-                g2d.fillOval(door[0]+3, door[1]-3, 6, 6);
-                g2d.setColor(new Color(139, 69, 19));
+                g2d.fillOval(door[0]+3, door[1]-3, 6, 6); // Larger door handle
+                g2d.setColor(new Color(139, 69, 19)); // Reset to brown
             }
         }
 
         private void drawElevators(Graphics2D g2d) {
+            // Elevator A
             g2d.setColor(new Color(30, 136, 229));
-            g2d.fillRect(340, 580, 25, 45);
+            g2d.fillRect(340, 580, 25, 45); // Larger elevators
             g2d.setColor(Color.BLACK);
             g2d.setStroke(new BasicStroke(2));
             g2d.drawRect(340, 580, 25, 45);
@@ -1058,6 +1162,7 @@ public class CampusMap extends JFrame {
             g2d.drawString("ELEV", 342, 600);
             g2d.drawString("A", 350, 615);
 
+            // Elevator B
             g2d.setColor(new Color(30, 136, 229));
             g2d.fillRect(690, 580, 25, 45);
             g2d.setColor(Color.BLACK);
@@ -1065,6 +1170,7 @@ public class CampusMap extends JFrame {
             g2d.drawString("ELEV", 692, 600);
             g2d.drawString("B", 700, 615);
 
+            // Elevator C
             g2d.setColor(new Color(30, 136, 229));
             g2d.fillRect(490, 380, 25, 45);
             g2d.setColor(Color.BLACK);
@@ -1076,16 +1182,19 @@ public class CampusMap extends JFrame {
         private void drawStairs(Graphics2D g2d) {
             g2d.setColor(new Color(120, 120, 120));
 
+            // Stairs A - larger
             g2d.fillRect(395, 580, 12, 45);
             for (int i = 0; i < 6; i++) {
                 g2d.fillRect(395 + i*2, 580 + i*7, 12, 4);
             }
 
+            // Stairs B - larger
             g2d.fillRect(745, 580, 12, 45);
             for (int i = 0; i < 6; i++) {
                 g2d.fillRect(745 + i*2, 580 + i*7, 12, 4);
             }
 
+            // Stairs C - larger
             g2d.fillRect(445, 380, 12, 45);
             for (int i = 0; i < 6; i++) {
                 g2d.fillRect(445 + i*2, 380 + i*7, 12, 4);
@@ -1101,6 +1210,7 @@ public class CampusMap extends JFrame {
         private void drawPath(Graphics2D g2d) {
             if (pathLocations == null || pathLocations.length < 2) return;
 
+            // Draw the main path line
             g2d.setColor(new Color(30, 136, 229, 200));
             g2d.setStroke(new BasicStroke(6, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 
@@ -1112,6 +1222,7 @@ public class CampusMap extends JFrame {
                 }
             }
 
+            // Draw path nodes
             g2d.setColor(new Color(21, 101, 192));
             for (String location : pathLocations) {
                 Point point = locationCoordinates.get(location);
@@ -1123,27 +1234,30 @@ public class CampusMap extends JFrame {
 
         private void drawLocationLabels(Graphics2D g2d) {
             g2d.setFont(new Font("Segoe UI", Font.PLAIN, 8));
-            g2d.setColor(Color.WHITE);
+            g2d.setColor(new Color(13, 71, 161));
 
             for (java.util.Map.Entry<String, Point> entry : locationCoordinates.entrySet()) {
                 Point point = entry.getValue();
                 String name = entry.getKey();
 
+                // Draw small circle for location
                 g2d.setColor(new Color(30, 136, 229));
                 g2d.fill(new Ellipse2D.Double(point.x - 3, point.y - 3, 6, 6));
 
-                g2d.setColor(Color.WHITE);
+                // Draw label with background for readability
+                g2d.setColor(new Color(13, 71, 161));
                 String displayName = name;
                 if (name.length() > 20) {
                     displayName = name.substring(0, Math.min(18, name.length())) + "...";
                 }
 
+                // Draw text with white background
                 FontMetrics fm = g2d.getFontMetrics();
                 int textWidth = fm.stringWidth(displayName);
-                g2d.setColor(new Color(0, 0, 0, 180));
+                g2d.setColor(new Color(255, 255, 255, 220));
                 g2d.fillRect(point.x - textWidth/2 - 2, point.y - 15, textWidth + 4, 10);
 
-                g2d.setColor(Color.WHITE);
+                g2d.setColor(new Color(13, 71, 161));
                 g2d.drawString(displayName, point.x - textWidth/2, point.y - 6);
             }
         }
@@ -1151,8 +1265,10 @@ public class CampusMap extends JFrame {
         private void drawPerson(Graphics2D g2d) {
             if (currentPosition == null) return;
 
-            g2d.setColor(new Color(229, 57, 53));
+            // Draw walking person with detailed appearance
+            g2d.setColor(new Color(229, 57, 53)); // Red color for body
 
+            // Body (circle)
             g2d.fill(new Ellipse2D.Double(
                     currentPosition.x - PERSON_RADIUS,
                     currentPosition.y - PERSON_RADIUS,
@@ -1160,28 +1276,35 @@ public class CampusMap extends JFrame {
                     PERSON_RADIUS * 2
             ));
 
+            // Direction indicator - ONLY HORIZONTAL/VERTICAL
             if (isNavigating && animationStep < pathPoints.size() - 1) {
                 Point nextPoint = pathPoints.get(animationStep + 1);
 
+                // Simple direction indicator (NO DIAGONAL MOVEMENT)
                 if (nextPoint.x > currentPosition.x) {
+                    // Moving right
                     g2d.setColor(Color.BLACK);
                     g2d.fillPolygon(new int[]{currentPosition.x + PERSON_RADIUS, currentPosition.x + PERSON_RADIUS + 12, currentPosition.x + PERSON_RADIUS},
                             new int[]{currentPosition.y - 6, currentPosition.y, currentPosition.y + 6}, 3);
                 } else if (nextPoint.x < currentPosition.x) {
+                    // Moving left
                     g2d.setColor(Color.BLACK);
                     g2d.fillPolygon(new int[]{currentPosition.x - PERSON_RADIUS, currentPosition.x - PERSON_RADIUS - 12, currentPosition.x - PERSON_RADIUS},
                             new int[]{currentPosition.y - 6, currentPosition.y, currentPosition.y + 6}, 3);
                 } else if (nextPoint.y > currentPosition.y) {
+                    // Moving down
                     g2d.setColor(Color.BLACK);
                     g2d.fillPolygon(new int[]{currentPosition.x - 6, currentPosition.x, currentPosition.x + 6},
                             new int[]{currentPosition.y + PERSON_RADIUS, currentPosition.y + PERSON_RADIUS + 12, currentPosition.y + PERSON_RADIUS}, 3);
                 } else if (nextPoint.y < currentPosition.y) {
+                    // Moving up
                     g2d.setColor(Color.BLACK);
                     g2d.fillPolygon(new int[]{currentPosition.x - 6, currentPosition.x, currentPosition.x + 6},
                             new int[]{currentPosition.y - PERSON_RADIUS, currentPosition.y - PERSON_RADIUS - 12, currentPosition.y - PERSON_RADIUS}, 3);
                 }
             }
 
+            // Pulsing glow effect when moving
             if (isNavigating && !isPaused) {
                 int glowSize = PERSON_RADIUS + 5 + (int)(3 * Math.sin(System.currentTimeMillis() * 0.01));
                 g2d.setColor(new Color(229, 57, 53, 80));
@@ -1193,6 +1316,7 @@ public class CampusMap extends JFrame {
                 ));
             }
 
+            // Draw destination marker
             if (destination != null) {
                 g2d.setColor(new Color(0, 150, 136));
                 g2d.setStroke(new BasicStroke(2));
@@ -1209,13 +1333,14 @@ public class CampusMap extends JFrame {
 
         private void drawLegend(Graphics2D g2d) {
             g2d.setFont(new Font("Arial", Font.PLAIN, 10));
-            g2d.setColor(Color.WHITE);
+            g2d.setColor(new Color(13, 71, 161));
 
             int legendX = 20;
             int legendY = 30;
             int lineHeight = 15;
 
-            g2d.setColor(new Color(0, 0, 0, 180));
+            // Legend background
+            g2d.setColor(new Color(255, 255, 255, 220));
             g2d.fillRect(legendX - 5, legendY - 15, 160, 140);
             g2d.setColor(new Color(30, 136, 229));
             g2d.drawRect(legendX - 5, legendY - 15, 160, 140);
@@ -1224,38 +1349,51 @@ public class CampusMap extends JFrame {
             legendY += lineHeight;
             g2d.setColor(new Color(30, 136, 229));
             g2d.fillRect(legendX, legendY, 10, 10);
-            g2d.setColor(Color.WHITE);
+            g2d.setColor(new Color(13, 71, 161));
             g2d.drawString("Navigation Path", legendX + 15, legendY + 8);
 
             legendY += lineHeight;
             g2d.setColor(new Color(229, 57, 53));
             g2d.fillOval(legendX, legendY, 10, 10);
-            g2d.setColor(Color.WHITE);
+            g2d.setColor(new Color(13, 71, 161));
             g2d.drawString("Your Position", legendX + 15, legendY + 8);
 
             legendY += lineHeight;
             g2d.setColor(new Color(30, 136, 229));
             g2d.fillRect(legendX, legendY, 10, 10);
-            g2d.setColor(Color.WHITE);
+            g2d.setColor(new Color(13, 71, 161));
             g2d.drawString("Elevator", legendX + 15, legendY + 8);
 
             legendY += lineHeight;
             g2d.setColor(Color.GRAY);
             g2d.fillRect(legendX, legendY, 10, 10);
-            g2d.setColor(Color.WHITE);
+            g2d.setColor(new Color(13, 71, 161));
             g2d.drawString("Stairs", legendX + 15, legendY + 8);
 
             legendY += lineHeight;
             g2d.setColor(new Color(139, 69, 19));
             g2d.fillRect(legendX, legendY, 10, 3);
-            g2d.setColor(Color.WHITE);
+            g2d.setColor(new Color(13, 71, 161));
             g2d.drawString("Doors", legendX + 15, legendY + 8);
 
             legendY += lineHeight;
             g2d.setColor(Color.RED);
             g2d.fillRect(legendX, legendY, 10, 10);
-            g2d.setColor(Color.WHITE);
+            g2d.setColor(new Color(13, 71, 161));
             g2d.drawString("Blocked Paths", legendX + 15, legendY + 8);
         }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            try {
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            CampusMap map = new CampusMap();
+            map.setVisible(true);
+        });
     }
 }

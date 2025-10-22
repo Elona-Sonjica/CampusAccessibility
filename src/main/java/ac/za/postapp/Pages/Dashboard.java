@@ -346,42 +346,71 @@ public class Dashboard extends JFrame {
         card.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         card.setOpaque(false);
 
-        // User avatar with raised hands emoji
+        // User avatar section
         JPanel avatarPanel = new JPanel(new BorderLayout());
         avatarPanel.setOpaque(false);
 
-        JLabel avatar = new JLabel("🤲🏽", SwingConstants.CENTER);
-        avatar.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 60));
+        JLabel avatar = new JLabel("👋", SwingConstants.CENTER);
+        avatar.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 48));
         avatar.setForeground(new Color(52, 152, 219));
         avatar.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 0));
 
         avatarPanel.add(avatar, BorderLayout.CENTER);
 
-        JLabel nameLabel = new JLabel("Welcome Explorer!", SwingConstants.CENTER);
-        nameLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        nameLabel.setForeground(Color.WHITE);
+        // User information section
+        JPanel infoPanel = new JPanel();
+        infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
+        infoPanel.setOpaque(false);
 
-        JLabel studentIdLabel = new JLabel("Ready to navigate campus", SwingConstants.CENTER);
+        // Welcome message with user's actual name
+        JLabel welcomeLabel = new JLabel("Welcome back!");
+        welcomeLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        welcomeLabel.setForeground(Color.WHITE);
+        welcomeLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        // User's actual name (will be updated when user data is set)
+        JLabel nameLabel = new JLabel(currentUser != null ? currentUser.getName() + " " + currentUser.getSurname() : "Student");
+        nameLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        nameLabel.setForeground(new Color(46, 204, 113));
+        nameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        // Student information
+        JLabel studentIdLabel = new JLabel(currentUser != null ? currentUser.getStudentNumber() : "Student ID");
         studentIdLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         studentIdLabel.setForeground(new Color(200, 220, 240));
+        studentIdLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JPanel infoPanel = new JPanel(new GridLayout(2, 1, 5, 5));
-        infoPanel.setOpaque(false);
+        JLabel emailLabel = new JLabel(currentUser != null ? currentUser.getEmail() : "email@campus.edu");
+        emailLabel.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        emailLabel.setForeground(new Color(180, 200, 220));
+        emailLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        infoPanel.add(welcomeLabel);
+        infoPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         infoPanel.add(nameLabel);
+        infoPanel.add(Box.createRigidArea(new Dimension(0, 8)));
         infoPanel.add(studentIdLabel);
+        infoPanel.add(Box.createRigidArea(new Dimension(0, 3)));
+        infoPanel.add(emailLabel);
 
-        // Status badge
-        JPanel badgePanel = createStatusBadge();
+        // Accessibility status section
+        JPanel statusPanel = createAccessibilityStatus();
 
         card.add(avatarPanel, BorderLayout.NORTH);
         card.add(infoPanel, BorderLayout.CENTER);
-        card.add(badgePanel, BorderLayout.SOUTH);
+        card.add(statusPanel, BorderLayout.SOUTH);
 
         return card;
     }
 
-    private JPanel createStatusBadge() {
-        JPanel badge = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5)) {
+    private JPanel createAccessibilityStatus() {
+        JPanel statusPanel = new JPanel();
+        statusPanel.setLayout(new BoxLayout(statusPanel, BoxLayout.Y_AXIS));
+        statusPanel.setOpaque(false);
+        statusPanel.setBorder(BorderFactory.createEmptyBorder(15, 0, 0, 0));
+
+        // Main status badge
+        JPanel badgePanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5)) {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2d = (Graphics2D) g;
@@ -391,16 +420,59 @@ public class Dashboard extends JFrame {
                 g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 12, 12);
             }
         };
-        badge.setOpaque(false);
-        badge.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
+        badgePanel.setOpaque(false);
+        badgePanel.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
+        badgePanel.setMaximumSize(new Dimension(250, 40));
 
-        JLabel badgeText = new JLabel("🚀 System Active");
-        badgeText.setFont(new Font("Segoe UI Emoji", Font.BOLD, 11));
+        JLabel badgeText = new JLabel("♿ Accessibility Active");
+        badgeText.setFont(new Font("Segoe UI", Font.BOLD, 12));
         badgeText.setForeground(new Color(255, 255, 255));
 
-        badge.add(badgeText);
+        badgePanel.add(badgeText);
 
-        return badge;
+        // Accessibility features summary
+        JPanel featuresPanel = new JPanel();
+        featuresPanel.setLayout(new BoxLayout(featuresPanel, BoxLayout.Y_AXIS));
+        featuresPanel.setOpaque(false);
+        featuresPanel.setBorder(BorderFactory.createEmptyBorder(10, 5, 0, 5));
+
+        if (currentUser != null) {
+            // Show actual user accessibility preferences
+            String deviceType = currentUser.getDeviceType() != null && !currentUser.getDeviceType().equals("None")
+                    ? currentUser.getDeviceType() : "No specific device";
+
+            String stairsPref = currentUser.isAvoidStairs() ? "Avoids stairs" : "Stairs OK";
+            String rampsPref = currentUser.isPreferRamps() ? "Prefers ramps" : "No ramp preference";
+            String widthPref = "Min width: " + currentUser.getMinPathWidthCm() + "cm";
+
+            JLabel deviceLabel = new JLabel("📱 " + deviceType);
+            JLabel stairsLabel = new JLabel("🚫 " + stairsPref);
+            JLabel rampsLabel = new JLabel("↗️ " + rampsPref);
+            JLabel widthLabel = new JLabel("📏 " + widthPref);
+
+            Font featureFont = new Font("Segoe UI", Font.PLAIN, 10);
+            Color featureColor = new Color(200, 220, 240);
+
+            for (JLabel label : new JLabel[]{deviceLabel, stairsLabel, rampsLabel, widthLabel}) {
+                label.setFont(featureFont);
+                label.setForeground(featureColor);
+                label.setAlignmentX(Component.CENTER_ALIGNMENT);
+                featuresPanel.add(label);
+                featuresPanel.add(Box.createRigidArea(new Dimension(0, 2)));
+            }
+        } else {
+            // Default message when no user data
+            JLabel defaultLabel = new JLabel("Configure your preferences in Settings");
+            defaultLabel.setFont(new Font("Segoe UI", Font.ITALIC, 10));
+            defaultLabel.setForeground(new Color(200, 220, 240));
+            defaultLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+            featuresPanel.add(defaultLabel);
+        }
+
+        statusPanel.add(badgePanel);
+        statusPanel.add(featuresPanel);
+
+        return statusPanel;
     }
 
     private JPanel createNavigationShortcuts() {
@@ -894,7 +966,11 @@ public class Dashboard extends JFrame {
         timeLabel.setText(currentTime);
 
         String greeting = getTimeBasedGreeting();
-        greetingLabel.setText(greeting + " • " + currentDate);
+        if (currentUser != null) {
+            greetingLabel.setText(greeting + ", " + currentUser.getName() + "! • " + currentDate);
+        } else {
+            greetingLabel.setText(greeting + "! • " + currentDate);
+        }
     }
 
     private String getTimeBasedGreeting() {
@@ -1121,7 +1197,16 @@ public class Dashboard extends JFrame {
             String greeting = getTimeBasedGreeting();
             greetingLabel.setText(greeting + ", " + currentUser.getName() + "! • " +
                     new SimpleDateFormat("EEEE, MMMM d, yyyy").format(new Date()));
+
+            // Refresh the sidebar to show actual user data
+            refreshSidebar();
         }
+    }
+
+    private void refreshSidebar() {
+        // This would typically involve recreating or updating the sidebar components
+        // For now, we'll just repaint
+        repaint();
     }
 
     private void loadLogo() {

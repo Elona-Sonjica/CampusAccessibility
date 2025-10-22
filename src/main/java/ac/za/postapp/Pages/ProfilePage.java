@@ -29,10 +29,10 @@ public class ProfilePage extends JDialog {
         super(parent, "👤 User Profile - Campus Access Guide", true);
         this.currentUser = user;
         this.parentFrame = parent;
-        setSize(800, 700);
+        setSize(900, 750); // Increased size to accommodate all fields
         setLocationRelativeTo(parent);
         setLayout(new BorderLayout(10, 10));
-        setResizable(false);
+        setResizable(true); // Changed to true to allow resizing
 
         // Main panel with gradient background
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10)) {
@@ -123,9 +123,13 @@ public class ProfilePage extends JDialog {
         JPanel avatarPanel = createAvatarPanel();
         panel.add(avatarPanel, BorderLayout.NORTH);
 
-        // Form section
-        JPanel formPanel = createPersonalInfoForm();
-        panel.add(formPanel, BorderLayout.CENTER);
+        // Form section with scroll pane to ensure all fields are visible
+        JScrollPane formScrollPane = new JScrollPane(createPersonalInfoForm());
+        formScrollPane.setBorder(BorderFactory.createEmptyBorder());
+        formScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        formScrollPane.setOpaque(false);
+        formScrollPane.getViewport().setOpaque(false);
+        panel.add(formScrollPane, BorderLayout.CENTER);
 
         return panel;
     }
@@ -135,20 +139,6 @@ public class ProfilePage extends JDialog {
         panel.setOpaque(false);
         panel.setBorder(BorderFactory.createEmptyBorder(0, 0, 20, 0));
 
-        avatarLabel = new JLabel("", SwingConstants.CENTER);
-        avatarLabel.setPreferredSize(new Dimension(120, 120));
-        avatarLabel.setOpaque(true);
-        avatarLabel.setBackground(new Color(70, 130, 180));
-        avatarLabel.setForeground(Color.WHITE);
-        avatarLabel.setFont(new Font("Segoe UI", Font.BOLD, 36));
-        avatarLabel.setText(String.valueOf(currentUser.getName().charAt(0)) +
-                String.valueOf(currentUser.getSurname().charAt(0)));
-        avatarLabel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(52, 152, 219), 3),
-                BorderFactory.createEmptyBorder(10, 10, 10, 10)
-        ));
-
-        // Make avatar circular
         avatarLabel = new JLabel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -201,7 +191,7 @@ public class ProfilePage extends JDialog {
         panel.setOpaque(false);
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(12, 12, 12, 12);
+        gbc.insets = new Insets(8, 12, 8, 12); // Reduced insets to fit more content
         gbc.anchor = GridBagConstraints.WEST;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0;
@@ -263,6 +253,14 @@ public class ProfilePage extends JDialog {
         phoneField = createStyledTextField();
         panel.add(phoneField, gbc);
 
+        // Add some empty space at the bottom
+        row++;
+        gbc.gridx = 0; gbc.gridy = row;
+        gbc.gridwidth = 2;
+        gbc.weighty = 1.0;
+        gbc.fill = GridBagConstraints.BOTH;
+        panel.add(Box.createVerticalGlue(), gbc);
+
         return panel;
     }
 
@@ -287,7 +285,7 @@ public class ProfilePage extends JDialog {
         panel.setOpaque(false);
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(12, 12, 12, 12);
+        gbc.insets = new Insets(8, 12, 8, 12);
         gbc.anchor = GridBagConstraints.WEST;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0;
@@ -339,6 +337,14 @@ public class ProfilePage extends JDialog {
         JComboBox<String> graduationComboBox = createStyledComboBox(graduationYears);
         panel.add(graduationComboBox, gbc);
 
+        // Add empty space
+        row++;
+        gbc.gridx = 0; gbc.gridy = row;
+        gbc.gridwidth = 2;
+        gbc.weighty = 1.0;
+        gbc.fill = GridBagConstraints.BOTH;
+        panel.add(Box.createVerticalGlue(), gbc);
+
         return panel;
     }
 
@@ -363,7 +369,7 @@ public class ProfilePage extends JDialog {
         panel.setOpaque(false);
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(12, 12, 12, 12);
+        gbc.insets = new Insets(8, 12, 8, 12);
         gbc.anchor = GridBagConstraints.WEST;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0;
@@ -417,6 +423,14 @@ public class ProfilePage extends JDialog {
         String[] themes = {"Light", "Dark", "System Default"};
         JComboBox<String> themeComboBox = createStyledComboBox(themes);
         panel.add(themeComboBox, gbc);
+
+        // Add empty space
+        row++;
+        gbc.gridx = 0; gbc.gridy = row;
+        gbc.gridwidth = 2;
+        gbc.weighty = 1.0;
+        gbc.fill = GridBagConstraints.BOTH;
+        panel.add(Box.createVerticalGlue(), gbc);
 
         return panel;
     }
@@ -517,6 +531,11 @@ public class ProfilePage extends JDialog {
         checkBox.setBackground(new Color(255, 255, 255, 0));
         checkBox.setFocusPainted(false);
         checkBox.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        // Fix hover color issue
+        checkBox.setContentAreaFilled(false);
+        checkBox.setOpaque(false);
+
         return checkBox;
     }
 

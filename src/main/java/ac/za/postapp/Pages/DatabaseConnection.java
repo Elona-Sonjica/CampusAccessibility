@@ -72,8 +72,6 @@ public class DatabaseConnection {
 
     // Helper method to show error dialogs without importing JOptionPane
     private static void showErrorDialog(String message) {
-        // For now, just print to console
-        // In a real application, you'd use JOptionPane here
         System.err.println("ERROR: " + message);
     }
 }
